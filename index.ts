@@ -1,5 +1,6 @@
-import venueRoutes from "./src/components/venue/venue.router";
-import eventRoutes from "./src/components/event/event.router"
+import venueRoutes from "./src/components/venue/venue.routes";
+import eventRoutes from "./src/components/event/event.routes"
+import ticketRoutes from "./src/components/ticket/ticket.routes";
 
 const initializeApp = () => {
     const app = express();
@@ -13,7 +14,8 @@ const initializeApp = () => {
 
     //Application Routes
     app.use("/api", eventRoutes);
-    app.use("/api", venueRoutes)
+    app.use("/api", venueRoutes);
+    app.use("/api", ticketRoutes);
 
     return app;
 }
