@@ -3,8 +3,6 @@ import { pgTable, serial, varchar, integer, bigint, timestamp, index, text, pgEn
 export const userRoleEnum = pgEnum('user_role', ['admin', 'customer', 'check_in_staff']);
 export const supportStatusEnum = pgEnum('support_status', ['open', 'closed', 'in_progress']);
 
-// TABLES
-
 // User Table
 export const User = pgTable('User', {
     id: serial('id').primaryKey(),
@@ -19,7 +17,7 @@ export const User = pgTable('User', {
     updateAt: timestamp('updateAt').notNull(),
 }, (table) => ({
     emailIndex: index('User_email_index').on(table.email),
-    emailIndex: index('User_role_index').on(table.role),
+    roleIndex: index('User_role_index').on(table.role),
 }));
 
 // Payment Table
@@ -112,18 +110,3 @@ export const Tickets = pgTable('tickets', {
     scannedAt: bigint('scanned_at', { mode: 'number' }),
     scannedByUser: integer('scanned_by_user').references(() => User.id),
 });
-
-// Relationships
-
-// Payment <-> Orders
-Payment.orderId.references(() => Orders.id);
-
-// OrderItems <-> Orders & TicketTypes
-OrderItems.orderId.references(() => Orders.id);
-OrderItems.ticketTypeId.references(() => TicketTypes.id);
-
-// Tickets <-> User, Venue, TicketTypes
-Tickets.userId.references(() => User.id);
-Tickets.eventId.references(() => Venue.id);
-Tickets.ticketTypeId.references(() => TicketTypes.id);
-Tickets.scannedByUser.references(() => User.id);
