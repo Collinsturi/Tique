@@ -1,6 +1,7 @@
 import venueRoutes from "./src/components/venue/venue.routes";
 import eventRoutes from "./src/components/event/event.routes"
 import ticketRoutes from "./src/components/ticket/ticket.routes";
+import ticketTypeRoutes from "./src/components/ticketTypes/ticketType.routes";
 
 const initializeApp = () => {
     const app = express();
@@ -16,6 +17,7 @@ const initializeApp = () => {
     app.use("/api", eventRoutes);
     app.use("/api", venueRoutes);
     app.use("/api", ticketRoutes);
+    app.use("/api", ticketTypeRoutes);
 
     return app;
 }
