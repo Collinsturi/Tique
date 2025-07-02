@@ -4,6 +4,7 @@ import ticketRoutes from "./src/components/ticket/ticket.routes";
 import ticketTypeRoutes from "./src/components/ticketTypes/ticketType.routes";
 import orderRoutes  from "./src/components/order/order.routes";
 import customerSupportRoutes from "src/components/customerSupport/customer.routes"
+import paymentRoutes from "src/components/payment/payment.routes"
 
 const initializeApp = () => {
     const app = express();
@@ -22,6 +23,7 @@ const initializeApp = () => {
     app.use("/api", ticketTypeRoutes);
     app.use("/api", orderRoutes);
     app.use("/api", customerSupportRoutes);
+    app.use("/api", paymentRoutes);
 
     return app;
 }
