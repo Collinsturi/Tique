@@ -110,3 +110,34 @@ export const Tickets = pgTable('tickets', {
     scannedAt: bigint('scanned_at', { mode: 'number' }),
     scannedByUser: integer('scanned_by_user').references(() => User.id),
 });
+
+
+export const TicketInsert = typeof Tickets.$inferInsert;
+export const TicketSelect = typeof Tickets.$inferSelect;
+
+export const OrderItemInsert = typeof OrderItems.$inferInsert;
+export const OrderItemSelect = typeof OrderItems.$inferSelect;
+
+export const OrderInsert = typeof Orders.$inferInsert;
+export const OrderItemSelect = typeof Orders.inferSelect;
+
+export const TicketTypesInsert = typeof TicketTypes.$inferInsert;
+export const TicketTypesSelect = typeof TicketTypes.$inferSelect;
+
+export const TicketInsert = typeof Tickets.$inferInsert;
+export const TicketSelect = typeof Tickets.$inferSelect;
+
+export const EventInsert = typeof Events.$inferInsert;
+export const EventSelect = typeof Events.$inferSelect;
+
+export const VenueInsert = typeof Venue.inferInsert;
+export const VenueSelect = typeof Venue.inferSelect;
+
+export const CustomerSupportInsert = typeof CustomerSupport.$inferInsert;
+export const CustomerSupportSelect = typeof CustomerSupport.$inferSelect;
+
+export const PaymentInsert = typeof Payment.inferInsert;
+export const PaymentSelect = typeof Payment.inferSelect;
+
+export const UserInsert = typeof User.inferInsert;
+export const UserSelect = typeof User.inferSelect;
