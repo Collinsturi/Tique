@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { eventService } from "./event.service";
 
 export class EventController {
-    async getAll(req: Request, res: Response) {
+     getAll = async (req: Request, res: Response) => {
         const filters = {
             venueId: req.query.venueId ? Number(req.query.venueId) : undefined,
             category: req.query.category as string | undefined,
@@ -17,7 +17,7 @@ export class EventController {
         }
     }
 
-    async getById(req: Request, res: Response) {
+     getById = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
         try {
             const event = await eventService.getEventById(id);
@@ -28,7 +28,7 @@ export class EventController {
         }
     }
 
-    async create(req: Request, res: Response) {
+    create = async (req: Request, res: Response) => {
         try {
             const newEvent = await eventService.createEvent(req.body);
             res.status(201).json(newEvent);
@@ -37,7 +37,7 @@ export class EventController {
         }
     }
 
-    async update(req: Request, res: Response) {
+    update = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
         try {
             const updatedEvent = await eventService.updateEvent(id, req.body);
@@ -47,7 +47,7 @@ export class EventController {
         }
     }
 
-    async delete(req: Request, res: Response) {
+     delete = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
         try {
             const deletedEvent = await eventService.deleteEvent(id);

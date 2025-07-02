@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { venueController } from "./venue.controller";
+import {asyncHandler} from "../utils/asyncHandler";
 
 const router = Router();
 
-router.get("/venues", venueController.getAll);
-router.get("/venues/:id", venueController.getById);
-router.post("/venues", venueController.create);
-router.put("/venues/:id", venueController.update);
-router.delete("/venues/:id", venueController.delete);
+router.get("/venues", asyncHandler(venueController.getAll));
+router.get("/venues/:id", asyncHandler(venueController.getById));
+router.post("/venues", asyncHandler(venueController.create));
+router.put("/venues/:id", asyncHandler(venueController.update));
+router.delete("/venues/:id", asyncHandler(venueController.delete));
 
 export default router;

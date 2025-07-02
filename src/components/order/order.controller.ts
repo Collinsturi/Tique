@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { orderService } from "./order.service";
 
 export class OrderController {
-    async getAll(req: Request, res: Response) {
+     getAll = async (req: Request, res: Response) => {
         try {
             const orders = await orderService.getAllOrders();
             res.json(orders);
@@ -11,7 +11,7 @@ export class OrderController {
         }
     }
 
-    async getById(req: Request, res: Response) {
+     getById = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
         try {
             const order = await orderService.getOrderById(id);
@@ -22,7 +22,7 @@ export class OrderController {
         }
     }
 
-    async create(req: Request, res: Response) {
+     create = async (req: Request, res: Response) => {
         const { order, orderItems } = req.body;
 
         if (!order || !orderItems || !Array.isArray(orderItems)) {
@@ -37,7 +37,7 @@ export class OrderController {
         }
     }
 
-    async update(req: Request, res: Response) {
+    update = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
 
         try {
@@ -48,7 +48,7 @@ export class OrderController {
         }
     }
 
-    async delete(req: Request, res: Response) {
+     delete = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
 
         try {

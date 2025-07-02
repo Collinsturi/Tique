@@ -1,9 +1,9 @@
 import { eq, sql } from "drizzle-orm";
-import db from "../Drizzle/db";
-import { AdminTable, CustomerTable, UserEntity, UsersTable } from "../Drizzle/schema";
+import db from "../../drizzle/db";
+import { type UserInsert, User } from "../../drizzle/schema";
 
-export const createUserService = async (user: UserEntity) => {
-    const result = await db.insert(UsersTable).values(user).returning();
+export const createUserService = async (user: UserInsert) => {
+    const result = await db.insert(User).values(user).returning();
     // const insertedUser = result[0]; // Always access the first row from returning()
 
     // // Insert into role-specific table
@@ -19,49 +19,49 @@ export const createUserService = async (user: UserEntity) => {
 }
 
 export const getUserByEmailService = async (email: string) => {
-    return await db.query.UsersTable.findFirst({
-        where: eq(UsersTable.email, email)
+    return await db.query.User.findFirst({
+        where: eq(User.email, email)
     });
 };
 
 
 export const verifyUserService = async (email: string) => {
-    await db.update(UsersTable)
-        .set({ isVerified: true, verificationCode: null })
-        .where(sql`${UsersTable.email} = ${email}`);
+    // await db.update(User)
+        // .set({ isVerified: true, verificationCode: null })
+        // .where(sql`${User.email} = ${email}`);
 }
 
 
 //login a user
-export const userLoginService = async (user: UserEntity) => {
+export const userLoginService = async (user: UserInsert) => {
     // email and password
     const { email } = user;
 
-    return await db.query.UsersTable.findFirst({
+    return await db.query.User.findFirst({
         columns: {
             firstName: true,
             lastName: true,
-            userID: true,
+            id: true,
             email: true,
             password: true,
             role: true
-        }, where: sql`${UsersTable.email} = ${email} `
+        }, where: sql`${User.email} = ${email} `
     })
 }
 
 export const getUserByIdService = async (id: number) => {
-    return await db.query.UsersTable.findFirst({
-        where: eq(UsersTable.userID, id)
+    return await db.query.User.findFirst({
+        where: eq(User.id, id)
     })
 }
 
 export const getAllUsersService = async () =>{
-    return await db.query.UsersTable.findMany()
+    return await db.query.User.findMany()
 }
 
 export const changeRolesService = async (userId: number, userRole: string) => {
-    const user = await db.query.UsersTable.findFirst({
-        where: eq(UsersTable.userID, userId)
+    const user = await db.query.User.findFirst({
+        where: eq(User.id, userId)
     });
 
     if (!user) {
@@ -69,15 +69,15 @@ export const changeRolesService = async (userId: number, userRole: string) => {
     }
 
     // Validate the role to only allow specific roles
-    if (userRole !== "admin" && userRole !== "user") {
+    if (userRole !== "admin" && userRole !== "customer" && userRole !== "check_in_staff") {
         throw new Error("Invalid role provided.");
     }
 
     // Perform update
     const updatedUser = await db
-        .update(UsersTable)
+        .update(User)
         .set({ role: userRole })
-        .where(eq(UsersTable.userID, userId))
+        .where(eq(User.id, userId))
         .returning();
 
     return updatedUser;

@@ -1,5 +1,5 @@
 import db from "../../drizzle/db";
-import { Venue, VenueInsert } from "../../drizzle/schema";
+import { Venue, type VenueInsert } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 
 export class VenueService {

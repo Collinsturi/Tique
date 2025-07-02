@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { customerSupportService } from "./customerSupport.service";
 
 export class CustomerSupportController {
-    async getAll(req: Request, res: Response) {
+    getAll = async (req: Request, res: Response) => {
         try {
             const tickets = await customerSupportService.getAll();
             res.json(tickets);
@@ -11,7 +11,7 @@ export class CustomerSupportController {
         }
     }
 
-    async getById(req: Request, res: Response) {
+    getById = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
 
         try {
@@ -23,7 +23,7 @@ export class CustomerSupportController {
         }
     }
 
-    async create(req: Request, res: Response) {
+    create = async (req: Request, res: Response) => {
         try {
             const newTicket = await customerSupportService.create(req.body);
             res.status(201).json(newTicket);
@@ -32,7 +32,7 @@ export class CustomerSupportController {
         }
     }
 
-    async update(req: Request, res: Response) {
+    update = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
 
         try {
@@ -43,7 +43,7 @@ export class CustomerSupportController {
         }
     }
 
-    async delete(req: Request, res: Response) {
+     delete = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
 
         try {

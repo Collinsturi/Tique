@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { ticketService } from "./ticket.service";
 
 export class TicketController {
-    async getAll(req: Request, res: Response) {
+     getAll = async (req: Request, res: Response) => {
         const filters = {
             eventId: req.query.eventId ? Number(req.query.eventId) : undefined,
             userId: req.query.userId ? Number(req.query.userId) : undefined,
@@ -17,7 +17,7 @@ export class TicketController {
         }
     }
 
-    async getById(req: Request, res: Response) {
+     getById = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
         try {
             const ticket = await ticketService.getTicketById(id);
@@ -28,7 +28,7 @@ export class TicketController {
         }
     }
 
-    async create(req: Request, res: Response) {
+     create = async (req: Request, res: Response) => {
         try {
             const newTicket = await ticketService.createTicket(req.body);
             res.status(201).json(newTicket);
@@ -37,7 +37,7 @@ export class TicketController {
         }
     }
 
-    async scan(req: Request, res: Response) {
+     scan = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
         const scannedByUser = Number(req.body.scannedByUser);
 
@@ -49,7 +49,7 @@ export class TicketController {
         }
     }
 
-    async delete(req: Request, res: Response) {
+     delete = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
         try {
             const deletedTicket = await ticketService.deleteTicket(id);

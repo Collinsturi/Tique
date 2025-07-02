@@ -4,7 +4,7 @@ import eventRoutes from "./components/event/event.routes"
 import ticketRoutes from "./components/ticket/ticket.routes";
 import ticketTypeRoutes from "./components/ticketTypes/ticketType.routes";
 import orderRoutes  from "./components/order/order.routes";
-import customerSupportRoutes from "./components/customerSupport/customer.routes"
+import customerSupportRoutes from "./components/customerSupport/customerSupport.routes"
 import paymentRoutes from "./components/payment/payment.routes"
 import cors from "cors";
 

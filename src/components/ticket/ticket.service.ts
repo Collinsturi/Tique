@@ -1,25 +1,30 @@
 import db from "../../drizzle/db";
-import { Tickets, TicketInsert } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { Tickets, type TicketInsert } from "../../drizzle/schema";
+import { eq, and } from "drizzle-orm";
 
 export class TicketService {
     // Get all tickets with optional filters
     async getAllTickets(filters: { eventId?: number; userId?: number; isScanned?: boolean }) {
         const { eventId, userId, isScanned } = filters;
 
-        let query = db.select().from(Tickets);
+        const conditions = [];
 
-        if (eventId) {
-            query = query.where(eq(Tickets.eventId, eventId));
+        if (eventId !== undefined) {
+            conditions.push(eq(Tickets.eventId, eventId));
         }
 
-        if (userId) {
-            query = query.where(eq(Tickets.userId, userId));
+        if (userId !== undefined) {
+            conditions.push(eq(Tickets.userId, userId));
         }
 
         if (isScanned !== undefined) {
-            query = query.where(eq(Tickets.isScanned, isScanned ? 1 : 0));
+            conditions.push(eq(Tickets.isScanned, isScanned ? 1 : 0));
         }
+
+        const query = db
+            .select()
+            .from(Tickets)
+            .where(conditions.length > 0 ? and(...conditions) : undefined);
 
         return await query;
     }

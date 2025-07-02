@@ -23,13 +23,10 @@ export const checkRoles = (requiredRole: "admin" | "customer" | "check_in_staff"
                 decoded !== null &&
                 "role" in decoded
             ) {
-                if (requiredRole === "both") {
-                    if (decoded.role === "admin" || decoded.role === "customer" || decoded.role === "check_in_staff") { // if the decoded role is admin or user, then allow access
-                        next();
-                        return;
-                    }
-                }
-                else if (decoded.role === requiredRole) {
+                if (decoded.role === "admin" || decoded.role === "customer" || decoded.role === "check_in_staff") {
+                    next();
+                    return;
+                } else if (decoded.role === requiredRole) {
                     next();
                     return;
                 }
@@ -49,5 +46,5 @@ export const checkRoles = (requiredRole: "admin" | "customer" | "check_in_staff"
 }
 
 export const adminRoleAuth = checkRoles("admin")
-export const userRoleAuth = checkRoles("user")
-export const bothRoleAuth = checkRoles("both")
+export const userRoleAuth = checkRoles("customer")
+export const checkInStaffRoleAuth = checkRoles("check_in_staff")

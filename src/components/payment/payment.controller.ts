@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { paymentService } from "./payment.service";
 
 export class PaymentController {
-    async getAll(req: Request, res: Response) {
+     getAll = async (req: Request, res: Response) => {
         try {
             const payments = await paymentService.getAll();
             res.json(payments);
@@ -11,7 +11,7 @@ export class PaymentController {
         }
     }
 
-    async getById(req: Request, res: Response) {
+     getById = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
 
         try {
@@ -23,7 +23,7 @@ export class PaymentController {
         }
     }
 
-    async create(req: Request, res: Response) {
+     create = async (req: Request, res: Response) => {
         try {
             const newPayment = await paymentService.create(req.body);
             res.status(201).json(newPayment);
@@ -32,7 +32,7 @@ export class PaymentController {
         }
     }
 
-    async update(req: Request, res: Response) {
+     update = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
 
         try {
@@ -43,7 +43,7 @@ export class PaymentController {
         }
     }
 
-    async delete(req: Request, res: Response) {
+     delete = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
 
         try {

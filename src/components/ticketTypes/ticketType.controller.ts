@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { ticketTypeService } from "./ticketType.service";
 
 export class TicketTypeController {
-    async getAll(req: Request, res: Response) {
+     getAll = async (req: Request, res: Response) => {
         const eventId = req.query.eventId ? Number(req.query.eventId) : undefined;
 
         try {
@@ -13,7 +13,7 @@ export class TicketTypeController {
         }
     }
 
-    async getById(req: Request, res: Response) {
+     getById = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
 
         try {
@@ -25,7 +25,7 @@ export class TicketTypeController {
         }
     }
 
-    async create(req: Request, res: Response) {
+     create = async (req: Request, res: Response) => {
         try {
             const newTicketType = await ticketTypeService.create(req.body);
             res.status(201).json(newTicketType);
@@ -34,7 +34,7 @@ export class TicketTypeController {
         }
     }
 
-    async update(req: Request, res: Response) {
+     update = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
 
         try {
@@ -45,7 +45,7 @@ export class TicketTypeController {
         }
     }
 
-    async delete(req: Request, res: Response) {
+     delete = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
 
         try {
