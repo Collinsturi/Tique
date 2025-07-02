@@ -1,3 +1,6 @@
+import venueRoutes from "./src/components/venue/venue.router";
+import eventRoutes from "./src/components/event/event.router"
+
 const initializeApp = () => {
     const app = express();
     app.use(express.json());
@@ -10,6 +13,7 @@ const initializeApp = () => {
 
     //Application Routes
     app.use("/api", eventRoutes);
+    app.use("/api", venueRoutes)
 
     return app;
 }
