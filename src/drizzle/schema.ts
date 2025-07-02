@@ -119,13 +119,10 @@ export const OrderItemInsert = typeof OrderItems.$inferInsert;
 export const OrderItemSelect = typeof OrderItems.$inferSelect;
 
 export const OrderInsert = typeof Orders.$inferInsert;
-export const OrderItemSelect = typeof Orders.inferSelect;
+export const OrderSelect = typeof Orders.inferSelect;
 
 export const TicketTypesInsert = typeof TicketTypes.$inferInsert;
 export const TicketTypesSelect = typeof TicketTypes.$inferSelect;
-
-export const TicketInsert = typeof Tickets.$inferInsert;
-export const TicketSelect = typeof Tickets.$inferSelect;
 
 export const EventInsert = typeof Events.$inferInsert;
 export const EventSelect = typeof Events.$inferSelect;

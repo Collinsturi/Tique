@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { ticketService } from "../services/ticket.service";
+import { ticketService } from "./ticket.service";
 
 export class TicketController {
     async getAll(req: Request, res: Response) {

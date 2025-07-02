@@ -1,10 +1,12 @@
-import venueRoutes from "./src/components/venue/venue.routes";
-import eventRoutes from "./src/components/event/event.routes"
-import ticketRoutes from "./src/components/ticket/ticket.routes";
-import ticketTypeRoutes from "./src/components/ticketTypes/ticketType.routes";
-import orderRoutes  from "./src/components/order/order.routes";
-import customerSupportRoutes from "src/components/customerSupport/customer.routes"
-import paymentRoutes from "src/components/payment/payment.routes"
+import express from "express";
+import venueRoutes from "./components/venue/venue.routes";
+import eventRoutes from "./components/event/event.routes"
+import ticketRoutes from "./components/ticket/ticket.routes";
+import ticketTypeRoutes from "./components/ticketTypes/ticketType.routes";
+import orderRoutes  from "./components/order/order.routes";
+import customerSupportRoutes from "./components/customerSupport/customer.routes"
+import paymentRoutes from "./components/payment/payment.routes"
+import cors from "cors";
 
 const initializeApp = () => {
     const app = express();

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { customerSupportService } from "../services/customerSupport.service";
+import { customerSupportService } from "./customerSupport.service";
 
 export class CustomerSupportController {
     async getAll(req: Request, res: Response) {

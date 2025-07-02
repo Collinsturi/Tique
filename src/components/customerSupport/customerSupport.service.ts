@@ -1,5 +1,5 @@
-import db from "../drizzle/db";
-import { CustomerSupport, CustomerSupportInsert } from "../drizzle/schema";
+import db from "../../drizzle/db";
+import { CustomerSupport, CustomerSupportInsert } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 
 export class CustomerSupportService {

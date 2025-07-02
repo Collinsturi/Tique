@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { venueService } from "../services/venue.service";
+import { venueService } from "./venue.service";
 
 export class VenueController {
     async getAll(req: Request, res: Response) {

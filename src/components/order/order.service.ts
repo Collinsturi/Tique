@@ -1,5 +1,5 @@
-import db from "../drizzle/db";
-import { Orders, OrderInsert, OrderItems, OrderItemInsert } from "../drizzle/schema";
+import db from "../../drizzle/db";
+import { Orders, OrderInsert, OrderItems, OrderItemInsert } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 
 export class OrderService {

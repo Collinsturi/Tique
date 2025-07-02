@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { ticketTypeController } from "../controllers/ticketType.controller";
+import { ticketTypeController } from "./ticketType.controller";
 
 const router = Router();
 
