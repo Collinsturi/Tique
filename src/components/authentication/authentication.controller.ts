@@ -13,7 +13,7 @@ export const createUserController = async (req: Request, res: Response) => {
         user.password = await bcrypt.hash(user.password, 10);
 
         // Generate a 6-digit verification code
-        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const verificationCode: number = Math.floor(100000 + Math.random() * 900000);
         user.verificationCode = verificationCode;
         user.isVerified = false;
 

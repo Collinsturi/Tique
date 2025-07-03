@@ -36,15 +36,13 @@ export class TicketService {
             throw new Error("Missing required ticket fields");
         }
 
-        const newTicket: Partial<TicketInsert> = {
+        const newTicket = {
             orderItemId,
             userId,
             eventId,
             ticketTypeId,
             uniqueCode: this.generateUniqueCode(),
-            isScanned: false,
-            scannedAt: null,
-            scannedByUser: null,
+            isScanned: false
         };
 
         const result = await db.insert(Tickets).values(newTicket).returning();

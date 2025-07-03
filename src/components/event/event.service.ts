@@ -18,7 +18,7 @@ export class EventService {
         }
 
         if (date !== undefined) {
-            conditions.push(eq(Events.eventDate, new Date(date)));
+            conditions.push(eq(Events.eventDate, date));
         }
 
         const query = db

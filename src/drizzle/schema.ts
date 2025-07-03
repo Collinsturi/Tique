@@ -12,10 +12,34 @@ import {
     boolean, date, time
 } from 'drizzle-orm/pg-core';
 
-export const userRoleEnum = pgEnum('user_role', ['admin', 'customer', 'check_in_staff']);
-export const supportStatusEnum = pgEnum('support_status', ['open', 'closed', 'in_progress']);
-export const orderStatusEnum = pgEnum('order_status', ['completed', 'in_progress']);
-export const paymentMethodEnum = pgEnum('payment_method', ['m-pesa', "stripe", 'paypal']);
+// ========================
+// User Roles Enum
+// ========================
+export const userRoles = ['admin', 'customer', 'check_in_staff'] as const;
+export const userRoleEnum = pgEnum('user_role', userRoles);
+export type UserRole = typeof userRoles[number];
+
+// ========================
+// Support Status Enum
+// ========================
+export const supportStatuses = ['open', 'closed', 'in_progress'] as const;
+export const supportStatusEnum = pgEnum('support_status', supportStatuses);
+export type SupportStatus = typeof supportStatuses[number];
+
+// ========================
+// Order Status Enum
+// ========================
+export const orderStatuses = ['completed', 'in_progress'] as const;
+export const orderStatusEnum = pgEnum('order_status', orderStatuses);
+export type OrderStatus = typeof orderStatuses[number];
+
+// ========================
+// Payment Method Enum
+// ========================
+export const paymentMethods = ['m-pesa', 'stripe', 'paypal'] as const;
+export const paymentMethodEnum = pgEnum('payment_method', paymentMethods);
+export type PaymentMethod = typeof paymentMethods[number];
+
 
 // User Table
 export const User = pgTable('User', {

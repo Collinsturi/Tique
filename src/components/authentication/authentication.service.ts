@@ -1,6 +1,6 @@
 import { eq, sql } from "drizzle-orm";
 import db from "../../drizzle/db";
-import { type UserInsert, User } from "../../drizzle/schema";
+import {type UserInsert, User,  UserRole} from "../../drizzle/schema";
 
 export class UserService {
     static async createUser(user: UserInsert) {
@@ -96,7 +96,7 @@ export class UserService {
         }
     }
 
-    static async changeUserRole(userId: number, userRole: string) {
+    static async changeUserRole(userId: number, userRole: UserRole) {
         try {
             const user = await db.query.User.findFirst({
                 where: eq(User.id, userId)
