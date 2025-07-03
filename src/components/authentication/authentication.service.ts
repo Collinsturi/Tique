@@ -2,83 +2,123 @@ import { eq, sql } from "drizzle-orm";
 import db from "../../drizzle/db";
 import { type UserInsert, User } from "../../drizzle/schema";
 
-export const createUserService = async (user: UserInsert) => {
-    const result = await db.insert(User).values(user).returning();
-    // const insertedUser = result[0]; // Always access the first row from returning()
-
-    // // Insert into role-specific table
-    // if (insertedUser.role === "admin") {
-    //     await db.insert(AdminTable).values({ userID: insertedUser.userID });
-    // } else if (insertedUser.role === "customer") {
-    //     await db.insert(CustomerTable).values({ userID: insertedUser.userID });
-    // } else if (insertedUser.role === "check_in_staff") {
-    //
-    // }
-
-    return "User created successfully";
-}
-
-export const getUserByEmailService = async (email: string) => {
-    return await db.query.User.findFirst({
-        where: eq(User.email, email)
-    });
-};
-
-
-export const verifyUserService = async (email: string) => {
-    // await db.update(User)
-        // .set({ isVerified: true, verificationCode: null })
-        // .where(sql`${User.email} = ${email}`);
-}
-
-
-//login a user
-export const userLoginService = async (user: UserInsert) => {
-    // email and password
-    const { email } = user;
-
-    return await db.query.User.findFirst({
-        columns: {
-            firstName: true,
-            lastName: true,
-            id: true,
-            email: true,
-            password: true,
-            role: true
-        }, where: sql`${User.email} = ${email} `
-    })
-}
-
-export const getUserByIdService = async (id: number) => {
-    return await db.query.User.findFirst({
-        where: eq(User.id, id)
-    })
-}
-
-export const getAllUsersService = async () =>{
-    return await db.query.User.findMany()
-}
-
-export const changeRolesService = async (userId: number, userRole: string) => {
-    const user = await db.query.User.findFirst({
-        where: eq(User.id, userId)
-    });
-
-    if (!user) {
-        return;
+export class UserService {
+    static async createUser(user: UserInsert) {
+        try {
+            const result = await db.insert(User).values(user).returning();
+            return result[0];
+        } catch (error) {
+            console.error("Error creating user:", error);
+            throw new Error("Failed to create user.");
+        }
     }
 
-    // Validate the role to only allow specific roles
-    if (userRole !== "admin" && userRole !== "customer" && userRole !== "check_in_staff") {
-        throw new Error("Invalid role provided.");
+    static async getUserByEmail(email: string) {
+        try {
+            return await db.query.User.findFirst({
+                where: eq(User.email, email)
+            });
+        } catch (error) {
+            console.error("Error fetching user by email:", error);
+            throw new Error("Failed to fetch user by email.");
+        }
     }
 
-    // Perform update
-    const updatedUser = await db
-        .update(User)
-        .set({ role: userRole })
-        .where(eq(User.id, userId))
-        .returning();
+    static async verifyUser(email: string) {
+        try {
+            const result = await db.update(User)
+                .set({ isVerified: true, verificationCode: null })
+                .where(eq(User.email, email))
+                .returning();
 
-    return updatedUser;
+            if (result.length === 0) {
+                throw new Error("User not found for verification.");
+            }
+
+            return result[0];
+        } catch (error) {
+            console.error("Error verifying user:", error);
+            throw new Error("Failed to verify user.");
+        }
+    }
+
+    static async loginUser(user: UserInsert) {
+        try {
+            const { email } = user;
+
+            const existingUser = await db.query.User.findFirst({
+                columns: {
+                    firstName: true,
+                    lastName: true,
+                    id: true,
+                    email: true,
+                    password: true,
+                    role: true
+                },
+                where: eq(User.email, email)
+            });
+
+            if (!existingUser) {
+                throw new Error("User not found.");
+            }
+
+            return existingUser;
+        } catch (error) {
+            console.error("Error during user login:", error);
+            throw new Error("Failed to login user.");
+        }
+    }
+
+    static async getUserById(id: number) {
+        try {
+            const user = await db.query.User.findFirst({
+                where: eq(User.id, id)
+            });
+
+            if (!user) {
+                throw new Error("User not found.");
+            }
+
+            return user;
+        } catch (error) {
+            console.error("Error fetching user by ID:", error);
+            throw new Error("Failed to fetch user by ID.");
+        }
+    }
+
+    static async getAllUsers() {
+        try {
+            return await db.query.User.findMany();
+        } catch (error) {
+            console.error("Error fetching all users:", error);
+            throw new Error("Failed to fetch all users.");
+        }
+    }
+
+    static async changeUserRole(userId: number, userRole: string) {
+        try {
+            const user = await db.query.User.findFirst({
+                where: eq(User.id, userId)
+            });
+
+            if (!user) {
+                throw new Error("User not found.");
+            }
+
+            const allowedRoles = ["admin", "customer", "check_in_staff"];
+            if (!allowedRoles.includes(userRole)) {
+                throw new Error("Invalid role provided.");
+            }
+
+            const updatedUser = await db.update(User)
+                .set({ role: userRole })
+                .where(eq(User.id, userId))
+                .returning();
+
+            return updatedUser[0];
+        } catch (error) {
+            console.error("Error changing user role:", error);
+            throw new Error("Failed to change user role.");
+        }
+    }
 }

@@ -7,5 +7,5 @@ dotenv.config();
 
 const sql = neon(process.env.Database_URL!);
 
-const db = drizzle(sql, { schema, logger: false });
+const db = drizzle(sql, { schema, logger: true });
 export default db;

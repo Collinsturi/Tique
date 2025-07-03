@@ -1,4 +1,16 @@
-import { pgTable, serial, varchar, integer, bigint, timestamp, index, text, pgEnum, primaryKey } from 'drizzle-orm/pg-core';
+import {
+    pgTable,
+    serial,
+    varchar,
+    integer,
+    bigint,
+    timestamp,
+    index,
+    text,
+    pgEnum,
+    primaryKey,
+    boolean
+} from 'drizzle-orm/pg-core';
 
 export const userRoleEnum = pgEnum('user_role', ['admin', 'customer', 'check_in_staff']);
 export const supportStatusEnum = pgEnum('support_status', ['open', 'closed', 'in_progress']);
@@ -10,11 +22,13 @@ export const User = pgTable('User', {
     lastName: varchar('lastName').notNull(),
     email: varchar('email').notNull().unique(),
     password: varchar('password').notNull(),
-    contactPhone: integer('contactPhone').notNull(),
+    contactPhone: varchar('contactPhone').notNull(),
     address: varchar('address'),
-    role: userRoleEnum('role').notNull(),
-    createdAt: timestamp('createdAt').notNull(),
-    updateAt: timestamp('updateAt').notNull(),
+    role: userRoleEnum('role').default('customer').notNull(),
+    verificationCode: integer('verificationCode').notNull(),
+    isVerified: boolean('isVerified').default(false).notNull(),
+    createdAt: timestamp('createdAt').defaultNow().notNull(),
+    updateAt: timestamp('updateAt').defaultNow().notNull(),
 }, (table) => ({
     emailIndex: index('User_email_index').on(table.email),
     roleIndex: index('User_role_index').on(table.role),

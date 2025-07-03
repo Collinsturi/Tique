@@ -6,6 +6,7 @@ import ticketTypeRoutes from "./components/ticketTypes/ticketType.routes";
 import orderRoutes  from "./components/order/order.routes";
 import customerSupportRoutes from "./components/customerSupport/customerSupport.routes"
 import paymentRoutes from "./components/payment/payment.routes"
+import authRoutes from "./components/authentication/authentication.router"
 import cors from "cors";
 
 const initializeApp = () => {
@@ -19,6 +20,7 @@ const initializeApp = () => {
     }));
 
     //Application Routes
+    app.use("/api", authRoutes)
     app.use("/api", eventRoutes);
     app.use("/api", venueRoutes);
     app.use("/api", ticketRoutes);

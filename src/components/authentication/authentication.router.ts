@@ -1,4 +1,4 @@
-import { Express } from "express";
+import { Router } from "express";
 import {
     changeRolesController,
     createUserController, getAllUsersController,
@@ -6,70 +6,16 @@ import {
     loginUserController,
     verifyUserController
 } from "./authentication.controller";
+import {asyncHandler} from "../utils/asyncHandler";
 
-const userRoute = (app: Express) => {
-    // route
-    app.route("/auth/register").post(
-        async (req, res, next) => {
-            try {
-                await createUserController(req, res)
-            } catch (error) {
-                next(error)
-            }
+const router = Router();
 
-        }
-    )
+router.get("/auth/register", asyncHandler(createUserController));
+router.post("/auth/register", asyncHandler(verifyUserController));
+router.post("/auth/login", asyncHandler(loginUserController));
+router.get("/auth/user/:id", asyncHandler(getUserByIdController));
+router.get("/auth/users", asyncHandler(getAllUsersController));
+router.get("/auth/user/roles", asyncHandler(changeRolesController));
 
-    // verify user route
-    app.route("/auth/verify").post(
-        async (req, res, next) => {
-            try {
-                await verifyUserController(req, res)
-            } catch (error) {
-                next(error)
-            }
-        }
-    )
 
-    // login route
-    app.route("/auth/login").post(
-        async (req, res, next) => {
-            try {
-                await loginUserController(req, res)
-            } catch (error) {
-                next()
-            }
-        }
-
-    )
-
-    //Get user details
-    app.route("/auth/user/:id").get(
-        async (req, res, next) => {
-            try{
-                await getUserByIdController(req, res)
-            }catch(error){
-                next()
-            }
-        }
-    )
-
-    //All users
-    app.route("/auth/users").get(
-        async (req, res, next) => {
-            try{
-                await getAllUsersController(req,res)
-            }catch(error){
-                next()
-            }
-        }
-    )
-
-    //change roles
-    app.route("/auth/user/role").put(
-        async(req, res, next) =>{
-            await changeRolesController(req, res)
-        })
-}
-
-export default userRoute;
+export default router;
