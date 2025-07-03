@@ -15,7 +15,7 @@ export class VenueController {
         const id = Number(req.params.id);
         try {
             const venue = await venueService.getVenueById(id);
-            if (!venue) return res.status(404).json({ message: "Venue not found" });
+            if (!venue) return res.status(200).json({ message: "Venue not found" });
             res.json(venue);
         } catch (error) {
             res.status(500).json({ message: "Failed to fetch venue", error });
@@ -34,6 +34,9 @@ export class VenueController {
     update = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
         try {
+            const venue = await venueService.getVenueById(id);
+            if (!venue) return res.status(200).json({ message: "Venue not found" });
+
             const updatedVenue = await venueService.updateVenue(id, req.body);
             res.json(updatedVenue);
         } catch (error) {

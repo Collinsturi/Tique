@@ -9,11 +9,13 @@ import {
     text,
     pgEnum,
     primaryKey,
-    boolean
+    boolean, date, time
 } from 'drizzle-orm/pg-core';
 
 export const userRoleEnum = pgEnum('user_role', ['admin', 'customer', 'check_in_staff']);
 export const supportStatusEnum = pgEnum('support_status', ['open', 'closed', 'in_progress']);
+export const orderStatusEnum = pgEnum('order_status', ['completed', 'in_progress']);
+export const paymentMethodEnum = pgEnum('payment_method', ['m-pesa', "stripe", 'paypal']);
 
 // User Table
 export const User = pgTable('User', {
@@ -53,9 +55,9 @@ export const CustomerSupport = pgTable('CustomerSupport', {
     userId: integer('user_id').notNull().references(() => User.id),
     subject: varchar('subject').notNull(),
     description: text('description').notNull(),
-    status: supportStatusEnum('status').notNull(),
-    createdAt: timestamp('createdAt').notNull(),
-    updatedAt: timestamp('updatedAt').notNull(),
+    status: supportStatusEnum('status').notNull().default('open'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
 });
 
 // Venue Table
@@ -64,20 +66,21 @@ export const Venue = pgTable('Venue', {
     name: varchar('name').notNull(),
     addresses: varchar('addresses').notNull(),
     capacity: integer('capacity').notNull(),
-    createdAt: timestamp('createdAt').notNull(),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    updateAt: timestamp('updatedAt').notNull().defaultNow(),
 });
 
 // Events Table
 export const Events = pgTable('Events', {
     id: serial('id').primaryKey(),
-    title: bigint('title', { mode: 'number' }).notNull(),
+    title: text('title').notNull(),
     Description: text('Description').notNull(),
     VenueId: integer('Venue_id').notNull().references(() => Venue.id),
     Category: varchar('Category').notNull(),
-    eventDate: timestamp('event_Date').notNull(),
-    eventTime: timestamp('event_time').notNull(),
-    createdAt: timestamp('createdAt').notNull(),
-    updatedAt: timestamp('updatedAt').notNull(),
+    eventDate: date('event_Date').notNull(),
+    eventTime: time('event_time').notNull(),
+    createdAt: timestamp('createdAt').defaultNow().notNull(),
+    updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 });
 
 // Ticket Types Table
@@ -95,11 +98,11 @@ export const Orders = pgTable('orders', {
     id: serial('id').primaryKey(),
     userId: integer('user_id').references(() => User.id),
     totalAmount: bigint('total_amount', { mode: 'number' }),
-    status: text('status'),
-    paymentMethod: bigint('payment_method', { mode: 'number' }),
+    status: orderStatusEnum('status').notNull().default('in_progress'),
+    paymentMethod: paymentMethodEnum('payment_method').notNull().default('stripe'),
     transactionId: varchar('transaction_id'),
-    createdAt: timestamp('created_at'),
-    updatedAt: timestamp('updated_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
 // Order Items Table
@@ -114,14 +117,14 @@ export const OrderItems = pgTable('order_items', {
 
 // Tickets Table
 export const Tickets = pgTable('tickets', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
+    id: serial('id').primaryKey(),
     orderItemId: bigint('order_item_id', { mode: 'number' }),
     userId: integer('user_id').notNull().references(() => User.id),
     eventId: integer('event_id').notNull().references(() => Venue.id),
     ticketTypeId: integer('ticket_type_id').references(() => TicketTypes.id),
-    uniqueCode: bigint('unique_code', { mode: 'number' }),
-    isScanned: bigint('is_scanned', { mode: 'number' }),
-    scannedAt: bigint('scanned_at', { mode: 'number' }),
+    uniqueCode: varchar('unique_code').notNull(),
+    isScanned: boolean('is_scanned').default(false).notNull(),
+    scannedAt: timestamp('scanned_at'),
     scannedByUser: integer('scanned_by_user').references(() => User.id),
 });
 

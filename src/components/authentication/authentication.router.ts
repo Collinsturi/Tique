@@ -11,11 +11,11 @@ import {asyncHandler} from "../utils/asyncHandler";
 const router = Router();
 
 router.get("/auth/register", asyncHandler(createUserController));
-router.post("/auth/register", asyncHandler(verifyUserController));
+router.post("/auth/verify", asyncHandler(verifyUserController));
 router.post("/auth/login", asyncHandler(loginUserController));
 router.get("/auth/user/:id", asyncHandler(getUserByIdController));
 router.get("/auth/users", asyncHandler(getAllUsersController));
-router.get("/auth/user/roles", asyncHandler(changeRolesController));
+router.patch("/auth/user/roles", asyncHandler(changeRolesController));
 
 
 export default router;

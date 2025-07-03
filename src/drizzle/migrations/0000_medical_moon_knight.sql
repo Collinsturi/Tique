@@ -1,3 +1,5 @@
+CREATE TYPE "public"."order_status" AS ENUM('completed', 'in_progress');--> statement-breakpoint
+CREATE TYPE "public"."payment_method" AS ENUM('m-pesa', 'stripe', 'paypal');--> statement-breakpoint
 CREATE TYPE "public"."support_status" AS ENUM('open', 'closed', 'in_progress');--> statement-breakpoint
 CREATE TYPE "public"."user_role" AS ENUM('admin', 'customer', 'check_in_staff');--> statement-breakpoint
 CREATE TABLE "CustomerSupport" (
@@ -5,21 +7,21 @@ CREATE TABLE "CustomerSupport" (
 	"user_id" integer NOT NULL,
 	"subject" varchar NOT NULL,
 	"description" text NOT NULL,
-	"status" "support_status" NOT NULL,
-	"createdAt" timestamp NOT NULL,
-	"updatedAt" timestamp NOT NULL
+	"status" "support_status" DEFAULT 'open' NOT NULL,
+	"createdAt" timestamp DEFAULT now() NOT NULL,
+	"updatedAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "Events" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"title" bigint NOT NULL,
+	"title" text NOT NULL,
 	"Description" text NOT NULL,
 	"Venue_id" integer NOT NULL,
 	"Category" varchar NOT NULL,
-	"event_Date" timestamp NOT NULL,
-	"event_time" timestamp NOT NULL,
-	"createdAt" timestamp NOT NULL,
-	"updatedAt" timestamp NOT NULL
+	"event_Date" date NOT NULL,
+	"event_time" time NOT NULL,
+	"createdAt" timestamp DEFAULT now() NOT NULL,
+	"updatedAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "order_items" (
@@ -35,11 +37,11 @@ CREATE TABLE "orders" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer,
 	"total_amount" bigint,
-	"status" text,
-	"payment_method" bigint,
+	"status" "order_status" DEFAULT 'in_progress' NOT NULL,
+	"payment_method" "payment_method" DEFAULT 'stripe' NOT NULL,
 	"transaction_id" varchar,
-	"created_at" timestamp,
-	"updated_at" timestamp
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "Payment" (
@@ -64,14 +66,14 @@ CREATE TABLE "ticket_types" (
 );
 --> statement-breakpoint
 CREATE TABLE "tickets" (
-	"id" bigint PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY NOT NULL,
 	"order_item_id" bigint,
 	"user_id" integer NOT NULL,
 	"event_id" integer NOT NULL,
 	"ticket_type_id" integer,
-	"unique_code" bigint,
-	"is_scanned" bigint,
-	"scanned_at" bigint,
+	"unique_code" varchar NOT NULL,
+	"is_scanned" boolean DEFAULT false NOT NULL,
+	"scanned_at" timestamp,
 	"scanned_by_user" integer
 );
 --> statement-breakpoint
@@ -81,11 +83,13 @@ CREATE TABLE "User" (
 	"lastName" varchar NOT NULL,
 	"email" varchar NOT NULL,
 	"password" varchar NOT NULL,
-	"contactPhone" integer NOT NULL,
+	"contactPhone" varchar NOT NULL,
 	"address" varchar,
-	"role" "user_role" NOT NULL,
-	"createdAt" timestamp NOT NULL,
-	"updateAt" timestamp NOT NULL,
+	"role" "user_role" DEFAULT 'customer' NOT NULL,
+	"verificationCode" integer NOT NULL,
+	"isVerified" boolean DEFAULT false NOT NULL,
+	"createdAt" timestamp DEFAULT now() NOT NULL,
+	"updateAt" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "User_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
@@ -94,7 +98,8 @@ CREATE TABLE "Venue" (
 	"name" varchar NOT NULL,
 	"addresses" varchar NOT NULL,
 	"capacity" integer NOT NULL,
-	"createdAt" timestamp NOT NULL
+	"createdAt" timestamp DEFAULT now() NOT NULL,
+	"updatedAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 ALTER TABLE "CustomerSupport" ADD CONSTRAINT "CustomerSupport_user_id_User_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."User"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

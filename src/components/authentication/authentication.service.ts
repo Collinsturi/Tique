@@ -27,7 +27,7 @@ export class UserService {
     static async verifyUser(email: string) {
         try {
             const result = await db.update(User)
-                .set({ isVerified: true, verificationCode: null })
+                .set({ isVerified: true })
                 .where(eq(User.email, email))
                 .returning();
 
@@ -53,7 +53,8 @@ export class UserService {
                     id: true,
                     email: true,
                     password: true,
-                    role: true
+                    role: true,
+                    isVerified: true,
                 },
                 where: eq(User.email, email)
             });

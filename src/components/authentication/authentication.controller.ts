@@ -97,6 +97,8 @@ export const loginUserController = async (req: Request, res: Response) => {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
+        console.log(userExist)
+
         if (!userExist.isVerified) {
             return res.status(403).json({ message: "Account not verified" });
         }
