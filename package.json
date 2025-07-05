@@ -12,7 +12,8 @@
     "migrate": "tsx src/drizzle/migrate.ts",
     "studio": "drizzle-kit studio",
     "push": " drizzle-kit generate && tsx ./src/drizzle/migrate.ts",
-    "stress:events": "k6 run performanceTesting/stress/events.get.stress.ts"
+    "stress:events": "k6 run performanceTesting/stress/events.get.stress.ts",
+    "breakpoint:location": "k6 run performanceTesting/breakpoint/events.get.breakpoint.ts"
   },
   "keywords": [],
   "author": "",
