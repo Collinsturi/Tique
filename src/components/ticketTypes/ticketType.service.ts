@@ -4,11 +4,11 @@ import { eq } from "drizzle-orm";
 
 export class TicketTypeService {
     async getAll(eventId?: number) {
-        try {
-            if (eventId && isNaN(eventId)) {
-                throw new Error("Invalid event ID");
-            }
+        if (eventId !== undefined && isNaN(eventId)) {
+            throw new Error("Invalid event ID");
+        }
 
+        try {
             if (eventId) {
                 return await db.select().from(TicketTypes).where(eq(TicketTypes.eventId, eventId));
             }
@@ -19,6 +19,7 @@ export class TicketTypeService {
             throw new Error("Failed to fetch ticket types");
         }
     }
+
 
     async getById(id: number) {
         if (isNaN(id)) {
