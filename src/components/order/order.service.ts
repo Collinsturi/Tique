@@ -73,6 +73,9 @@ export class OrderService {
             return result[0];
         } catch (error) {
             console.error(`Error updating order with ID ${id}:`, error);
+            if (error.message.includes(`Order with ID ${id} not found`)) {
+                throw error; // Let specific error pass through
+            }
             throw new Error("Failed to update order");
         }
     }
