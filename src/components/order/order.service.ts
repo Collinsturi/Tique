@@ -71,7 +71,7 @@ export class OrderService {
             }
 
             return result[0];
-        } catch (error) {
+        } catch (error: any) {
             console.error(`Error updating order with ID ${id}:`, error);
             if (error.message.includes(`Order with ID ${id} not found`)) {
                 throw error; // Let specific error pass through
@@ -92,7 +92,7 @@ export class OrderService {
             const result = await db.delete(Orders).where(eq(Orders.id, id)).returning();
 
             return result[0];
-        } catch (error) {
+        } catch (error: any) {
             console.error(`Error deleting order with ID ${id}:`, error);
             throw new Error("Failed to delete order");
         }
