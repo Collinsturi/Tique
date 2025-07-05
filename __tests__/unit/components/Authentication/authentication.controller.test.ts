@@ -1,111 +1,227 @@
-// // __tests__/authentication.controller.test.ts
-// import request from 'supertest';
-// import express from 'express';
-// import jwt from 'jsonwebtoken';
-// import * as authService from '../../../src/Authentication/authentication.service';
-// import * as mailer from '../../../src/communication/mailer';
-// import { createUserController, verifyUserController, loginUserController } from '../../../src/Authentication/authentication.controller';
-//
-// const app = express();
-// app.use(express.json());
-// app.post('/register', createUserController);
-// app.post('/verify', verifyUserController);
-// app.post('/login', loginUserController);
-//
-// describe('Authentication Controller', () => {
-//   afterEach(() => jest.clearAllMocks());
-//
-//   describe('POST /register', () => {
-//     it('should create user and send verification email', async () => {
-//       jest.spyOn(authService, 'createUserService').mockResolvedValue({ userID: 1 });
-//       jest.spyOn(mailer, 'sendEmail').mockResolvedValue();
-//
-//       const res = await request(app)
-//         .post('/register')
-//         .send({ email: 'test@example.com', lastName: 'Doe', password: 'password123' });
-//
-//       expect(res.status).toBe(201);
-//       expect(res.body.message).toMatch(/Verification code sent/);
-//     });
-//
-//     it('should return 500 on service error', async () => {
-//       jest.spyOn(authService, 'createUserService').mockRejectedValue(new Error('DB error'));
-//
-//       const res = await request(app)
-//         .post('/register')
-//         .send({ email: 'test@example.com', lastName: 'Doe', password: 'password123' });
-//
-//       expect(res.status).toBe(500);
-//       expect(res.body.error).toBe('DB error');
-//     });
-//   });
-//
-//   describe('POST /verify', () => {
-//     it('should verify user when code matches', async () => {
-//       const mockUser = {
-//         email: 'test@example.com',
-//         lastName: 'Doe',
-//         verificationCode: '123456'
-//       };
-//
-//       jest.spyOn(authService, 'getUserByEmailService').mockResolvedValue(mockUser);
-//       jest.spyOn(authService, 'verifyUserService').mockResolvedValue(undefined);
-//       jest.spyOn(mailer, 'sendEmail').mockResolvedValue();
-//
-//       const res = await request(app)
-//         .post('/verify')
-//         .send({ email: 'test@example.com', code: '123456' });
-//
-//       expect(res.status).toBe(200);
-//       expect(res.body.message).toBe('User verified successfully');
-//     });
-//
-//     it('should return 400 if code does not match', async () => {
-//       jest.spyOn(authService, 'getUserByEmailService').mockResolvedValue({ verificationCode: '000000' });
-//
-//       const res = await request(app)
-//         .post('/verify')
-//         .send({ email: 'test@example.com', code: '999999' });
-//
-//       expect(res.status).toBe(400);
-//       expect(res.body.message).toBe('Invalid verification code');
-//     });
-//   });
-//
-//   describe('POST /login', () => {
-//     it('should return token for valid login', async () => {
-//       process.env.JWT_SECRET = 'test_secret';
-//
-//       jest.spyOn(authService, 'userLoginService').mockResolvedValue({
-//         userID: 1,
-//         email: 'test@example.com',
-//         password: '$2a$10$abcdefghijklmnopqrstuv',
-//         role: 'user'
-//       });
-//
-//       jest.spyOn(require('bcryptjs'), 'compareSync').mockReturnValue(true);
-//
-//       const res = await request(app)
-//         .post('/login')
-//         .send({ email: 'test@example.com', password: 'password123' });
-//
-//       expect(res.status).toBe(200);
-//       expect(res.body).toHaveProperty('token');
-//       expect(res.body.user.email).toBe('test@example.com');
-//     });
-//
-//     it('should return 401 for invalid credentials', async () => {
-//       jest.spyOn(authService, 'userLoginService').mockResolvedValue({
-//         email: 'test@example.com', password: 'hash', userID: 1
-//       });
-//       jest.spyOn(require('bcryptjs'), 'compareSync').mockReturnValue(false);
-//
-//       const res = await request(app)
-//         .post('/login')
-//         .send({ email: 'test@example.com', password: 'wrongpass' });
-//
-//       expect(res.status).toBe(401);
-//       expect(res.body.message).toBe('Invalid credentials');
-//     });
-//   });
-// });
+import {
+    createUserController,
+    verifyUserController,
+    loginUserController,
+    getUserByIdController,
+    getAllUsersController,
+    changeRolesController
+} from '../../../../src/components/authentication/authentication.controller';
+import { UserService } from '../../../../src/components/authentication/authentication.service';
+import { sendEmail } from '../../../../src/communication/mailer';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+
+jest.mock('../../../../src/components/authentication/authentication.service');
+jest.mock('../../../../src/communication/mailer');
+jest.mock('bcryptjs');
+jest.mock('jsonwebtoken');
+
+describe('Authentication Controllers (Updated)', () => {
+    let req: any;
+    let res: any;
+
+    beforeEach(() => {
+        req = {};
+        res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        };
+        jest.clearAllMocks();
+    });
+
+    describe('createUserController', () => {
+        it('should create a user and send verification email', async () => {
+            req.body = { email: 'test@example.com', password: 'password123', lastName: 'Doe' };
+            (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
+            (UserService.createUser as jest.Mock).mockResolvedValue({ id: 1 });
+            (sendEmail as jest.Mock).mockResolvedValue(undefined);
+
+            await createUserController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(201);
+            expect(res.json).toHaveBeenCalledWith({ message: "User created. Verification code sent to email." });
+        });
+
+        it('should return 500 if user creation fails', async () => {
+            req.body = { email: 'test@example.com', password: 'password123', lastName: 'Doe' };
+            (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
+            (UserService.createUser as jest.Mock).mockRejectedValue(new Error('DB error'));
+
+            await createUserController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.json).toHaveBeenCalledWith({ error: 'DB error' });
+        });
+    });
+
+    describe('verifyUserController', () => {
+        it('should verify user and send success email', async () => {
+            req.body = { email: 'test@example.com', code: 123456 };
+            (UserService.getUserByEmail as jest.Mock).mockResolvedValue({ email: 'test@example.com', verificationCode: 123456, lastName: 'Doe' });
+            (UserService.verifyUser as jest.Mock).mockResolvedValue({});
+            (sendEmail as jest.Mock).mockResolvedValue(undefined);
+
+            await verifyUserController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({ message: "User verified successfully" });
+        });
+
+        it('should return 200 if user not found', async () => {
+            req.body = { email: 'test@example.com', code: 123456 };
+            (UserService.getUserByEmail as jest.Mock).mockResolvedValue(null);
+
+            await verifyUserController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({ message: "User not found" });
+        });
+
+        it('should return 400 if verification code is invalid', async () => {
+            req.body = { email: 'test@example.com', code: 654321 };
+            (UserService.getUserByEmail as jest.Mock).mockResolvedValue({ email: 'test@example.com', verificationCode: 123456 });
+
+            await verifyUserController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({ message: "Invalid verification code" });
+        });
+    });
+
+    describe('loginUserController', () => {
+        it('should login user and return token', async () => {
+            req.body = { email: 'test@example.com', password: 'password123' };
+            const mockUser = { id: 1, email: 'test@example.com', password: 'hashedPassword', firstName: 'John', lastName: 'Doe', role: 'customer', isVerified: true };
+            (UserService.loginUser as jest.Mock).mockResolvedValue(mockUser);
+            (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+            (jwt.sign as jest.Mock).mockReturnValue('mockToken');
+
+            process.env.JWT_SECRET = 'testsecret';
+
+            await loginUserController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                message: "Login successful",
+                token: 'mockToken',
+                user: {
+                    user_id: mockUser.id,
+                    first_name: mockUser.firstName,
+                    last_name: mockUser.lastName,
+                    email: mockUser.email,
+                    role: mockUser.role
+                }
+            });
+        });
+
+        it('should return 200 if user not found', async () => {
+            req.body = { email: 'test@example.com', password: 'password123' };
+            (UserService.loginUser as jest.Mock).mockResolvedValue(null);
+
+            await loginUserController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({ message: "User not found" });
+        });
+
+        it('should return 401 if password does not match', async () => {
+            req.body = { email: 'test@example.com', password: 'password123' };
+            const mockUser = { id: 1, email: 'test@example.com', password: 'hashedPassword', firstName: 'John', lastName: 'Doe', role: 'customer', isVerified: true };
+            (UserService.loginUser as jest.Mock).mockResolvedValue(mockUser);
+            (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+            await loginUserController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith({ message: "Invalid credentials" });
+        });
+
+        it('should return 403 if account is not verified', async () => {
+            req.body = { email: 'test@example.com', password: 'password123' };
+            const mockUser = { id: 1, email: 'test@example.com', password: 'hashedPassword', firstName: 'John', lastName: 'Doe', role: 'customer', isVerified: false };
+            (UserService.loginUser as jest.Mock).mockResolvedValue(mockUser);
+            (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+            await loginUserController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(403);
+            expect(res.json).toHaveBeenCalledWith({ message: "Account not verified" });
+        });
+    });
+
+    describe('getUserByIdController', () => {
+        it('should return user by ID', async () => {
+            req.params = { id: '1' };
+            const mockUser = { id: 1, email: 'test@example.com' };
+            (UserService.getUserById as jest.Mock).mockResolvedValue(mockUser);
+
+            await getUserByIdController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(mockUser);
+        });
+
+        it('should return 200 if user not found', async () => {
+            req.params = { id: '1' };
+            (UserService.getUserById as jest.Mock).mockResolvedValue(null);
+
+            await getUserByIdController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({ message: "User not found" });
+        });
+    });
+
+    describe('getAllUsersController', () => {
+        it('should return all users', async () => {
+            const users = [{ id: 1 }, { id: 2 }];
+            (UserService.getAllUsers as jest.Mock).mockResolvedValue(users);
+
+            await getAllUsersController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(users);
+        });
+
+        it('should return 200 if no users found', async () => {
+            (UserService.getAllUsers as jest.Mock).mockResolvedValue([]);
+
+            await getAllUsersController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({ message: "No users found." });
+        });
+    });
+
+    describe('changeRolesController', () => {
+        it('should update user role successfully', async () => {
+            req.body = { id: 1, role: 'admin' };
+            const updatedUser = { id: 1, role: 'admin' };
+            (UserService.changeUserRole as jest.Mock).mockResolvedValue(updatedUser);
+
+            await changeRolesController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({ message: "User role updated successfully", user: updatedUser });
+        });
+
+        it('should return 400 for invalid user ID', async () => {
+            req.body = { id: 'abc', role: 'admin' };
+
+            await changeRolesController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({ message: "Invalid user ID" });
+        });
+
+        it('should return 200 if user not found or invalid role provided', async () => {
+            req.body = { id: 1, role: 'admin' };
+            (UserService.changeUserRole as jest.Mock).mockResolvedValue(null);
+
+            await changeRolesController(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({ message: "User not found or invalid role provided." });
+        });
+    });
+});

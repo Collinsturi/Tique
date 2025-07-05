@@ -52,7 +52,7 @@ export const verifyUserController = async (req: Request, res: Response) => {
         const user = await UserService.getUserByEmail(email);
 
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(200).json({ message: "User not found" });
         }
 
         if (user.verificationCode === code) {
@@ -89,7 +89,7 @@ export const loginUserController = async (req: Request, res: Response) => {
 
         const userExist = await UserService.loginUser(user);
         if (!userExist) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(200).json({ message: "User not found" });
         }
 
         const passwordMatch = await bcrypt.compare(user.password, userExist.password);
@@ -140,7 +140,7 @@ export const getUserByIdController = async (req: Request, res: Response) => {
         const user = await UserService.getUserById(parseInt(req.params.id));
 
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(200).json({ message: "User not found" });
         }
 
         return res.status(200).json(user);
@@ -154,7 +154,7 @@ export const getAllUsersController = async (req: Request, res: Response) => {
         const users = await UserService.getAllUsers();
 
         if (!users.length) {
-            return res.status(404).json({ message: "No users found." });
+            return res.status(200).json({ message: "No users found." });
         }
 
         return res.status(200).json(users);
@@ -176,7 +176,7 @@ export const changeRolesController = async (req: Request, res: Response) => {
         const updatedUser = await UserService.changeUserRole(userId, role);
 
         if (!updatedUser) {
-            return res.status(404).json({ message: "User not found or invalid role provided." });
+            return res.status(200).json({ message: "User not found or invalid role provided." });
         }
 
         return res.status(200).json({ message: "User role updated successfully", user: updatedUser });
