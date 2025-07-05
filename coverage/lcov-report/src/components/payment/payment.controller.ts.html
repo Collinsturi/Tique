@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">24.24% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/33</span>
+                <span class='fraction'>8/33</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">25% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/32</span>
+                <span class='fraction'>8/32</span>
             </div>
         
             
@@ -122,22 +122,10 @@
 <a name='L57'></a><a href='#L57'>57</a>
 <a name='L58'></a><a href='#L58'>58</a>
 <a name='L59'></a><a href='#L59'>59</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -145,6 +133,9 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -155,7 +146,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -166,24 +166,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Request, Response } from "express";
-<span class="cstat-no" title="statement not covered" >import { paymentService } from "./payment.service";</span>
+import { paymentService } from "./payment.service";
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export class P</span>aymentController {
-     getAll = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async </span>(req: Request, res: Response) =&gt; {</span>
+export class PaymentController {
+     getAll = <span class="fstat-no" title="function not covered" >async </span>(req: Request, res: Response) =&gt; {
 <span class="cstat-no" title="statement not covered" >        try {</span>
             const payments = <span class="cstat-no" title="statement not covered" >await paymentService.getAll();</span>
 <span class="cstat-no" title="statement not covered" >            res.json(payments);</span>
@@ -192,7 +192,7 @@
         }
     }
 &nbsp;
-     getById = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async </span>(req: Request, res: Response) =&gt; {</span>
+     getById = <span class="fstat-no" title="function not covered" >async </span>(req: Request, res: Response) =&gt; {
         const id = <span class="cstat-no" title="statement not covered" >Number(req.params.id);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        try {</span>
@@ -204,7 +204,7 @@
         }
     }
 &nbsp;
-     create = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async </span>(req: Request, res: Response) =&gt; {</span>
+     create = <span class="fstat-no" title="function not covered" >async </span>(req: Request, res: Response) =&gt; {
 <span class="cstat-no" title="statement not covered" >        try {</span>
             const newPayment = <span class="cstat-no" title="statement not covered" >await paymentService.create(req.body);</span>
 <span class="cstat-no" title="statement not covered" >            res.status(201).json(newPayment);</span>
@@ -213,7 +213,7 @@
         }
     }
 &nbsp;
-     update = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async </span>(req: Request, res: Response) =&gt; {</span>
+     update = <span class="fstat-no" title="function not covered" >async </span>(req: Request, res: Response) =&gt; {
         const id = <span class="cstat-no" title="statement not covered" >Number(req.params.id);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        try {</span>
@@ -224,7 +224,7 @@
         }
     }
 &nbsp;
-     delete = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async </span>(req: Request, res: Response) =&gt; {</span>
+     delete = <span class="fstat-no" title="function not covered" >async </span>(req: Request, res: Response) =&gt; {
         const id = <span class="cstat-no" title="statement not covered" >Number(req.params.id);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        try {</span>
@@ -236,7 +236,7 @@
     }
 }
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >paymentController = new PaymentController();</span>
+export const paymentController = new PaymentController();
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -244,7 +244,7 @@ export const <span class="cstat-no" title="statement not covered" >paymentContro
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-05T10:07:03.836Z
+                at 2025-07-05T19:11:25.112Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

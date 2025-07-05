@@ -6,7 +6,7 @@ const config: Config = {
     verbose: true,
     openHandlesTimeout: 10000,
     testTimeout: 10000,
-    // collectCoverage: true,
+    collectCoverage: true,
     coverageDirectory: 'coverage',
     collectCoverageFrom: [
         '<rootDir>/src/**/*.ts',
