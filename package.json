@@ -13,7 +13,8 @@
     "studio": "drizzle-kit studio",
     "push": " drizzle-kit generate && tsx ./src/drizzle/migrate.ts",
     "stress:events": "k6 run performanceTesting/stress/events.get.stress.ts",
-    "breakpoint:location": "k6 run performanceTesting/breakpoint/events.get.breakpoint.ts"
+    "breakpoint:events": "k6 run performanceTesting/breakpoint/events.get.breakpoint.ts",
+    "load:events": "k6 run performanceTesting/load/events.get.load.ts"
   },
   "keywords": [],
   "author": "",
