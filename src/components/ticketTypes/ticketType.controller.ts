@@ -3,11 +3,11 @@ import { ticketTypeService } from "./ticketType.service";
 
 export class TicketTypeController {
     getAll = async (req: Request, res: Response) => {
-        const eventId = req.query.eventId ? Number(req.query.eventId) : undefined;
-
-        if (eventId && isNaN(eventId)) {
-            return res.status(400).json({ message: "Invalid event ID" });
+        if (req.query.eventId && isNaN(Number(req.query.eventId))) {
+            return res.status(200).json({ message: "Invalid event ID" });
         }
+
+        const eventId = req.query.eventId ? Number(req.query.eventId) : undefined;
 
         try {
             const ticketTypes = await ticketTypeService.getAll(eventId);
@@ -17,6 +17,7 @@ export class TicketTypeController {
             return res.status(500).json({ message: "Failed to fetch ticket types", error: error.message });
         }
     }
+
 
     getById = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
