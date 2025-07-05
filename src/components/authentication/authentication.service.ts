@@ -1,6 +1,6 @@
 import { eq, sql } from "drizzle-orm";
 import db from "../../drizzle/db";
-import {type UserInsert, User,  UserRole} from "../../drizzle/schema";
+import { type UserInsert, User, UserRole } from "../../drizzle/schema";
 
 export class UserService {
     static async createUser(user: UserInsert) {
@@ -36,7 +36,9 @@ export class UserService {
             }
 
             return result[0];
-        } catch (error) {
+        } catch (error: any) {
+            if (error.message === "User not found for verification.") throw error;
+
             console.error("Error verifying user:", error);
             throw new Error("Failed to verify user.");
         }
@@ -64,7 +66,9 @@ export class UserService {
             }
 
             return existingUser;
-        } catch (error) {
+        } catch (error: any) {
+            if (error.message === "User not found.") throw error;
+
             console.error("Error during user login:", error);
             throw new Error("Failed to login user.");
         }
@@ -81,7 +85,9 @@ export class UserService {
             }
 
             return user;
-        } catch (error) {
+        } catch (error: any) {
+            if (error.message === "User not found.") throw error;
+
             console.error("Error fetching user by ID:", error);
             throw new Error("Failed to fetch user by ID.");
         }
@@ -117,7 +123,10 @@ export class UserService {
                 .returning();
 
             return updatedUser[0];
-        } catch (error) {
+        } catch (error: any) {
+            if (error.message === "User not found.") throw error;
+            if (error.message === "Invalid role provided.") throw error;
+
             console.error("Error changing user role:", error);
             throw new Error("Failed to change user role.");
         }
