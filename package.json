@@ -16,7 +16,8 @@
     "breakpoint:events": "k6 run performanceTesting/breakpoint/events.get.breakpoint.ts",
     "load:events": "k6 run performanceTesting/load/events.get.load.ts",
     "spike:events": "k6 run performanceTesting/spike/events.get.spike.ts",
-    "soak:events": "k6 run performanceTesting/soak/events.get.soak.ts"
+    "soak:events": "k6 run performanceTesting/soak/events.get.soak.ts",
+    "smoke:events": "k6 run performanceTesting/smoke/events.get.smoke.ts"
   },
   "keywords": [],
   "author": "",
