@@ -9,6 +9,7 @@ import { type UserInsert } from "../../drizzle/schema";
 // Create user controller
 export const createUserController = async (req: Request, res: Response) => {
     try {
+        console.log('HIT REGISTER CONTROLLER');
         const user: UserInsert = req.body;
         user.password = await bcrypt.hash(user.password, 10);
 

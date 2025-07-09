@@ -2,7 +2,6 @@ import request from 'supertest';
 import app from '../../../../src/index';
 import { eventService } from '../../../../src/components/event/event.service';
 
-// Mock the eventService
 jest.mock('../../../../src/components/event/event.service');
 const mockEventService = eventService as jest.Mocked<typeof eventService>;
 

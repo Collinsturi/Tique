@@ -6,16 +6,10 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { UserSelect } from '../../../../src/drizzle/schema';
 
-// Mock the entire UserService module.
-// This ensures that any calls to UserService methods within the controllers
-// will use our mocked implementations instead of the actual service logic
-// that would interact with the database.
 jest.mock('../../../../src/components/authentication/authentication.service');
-// Cast the mocked UserService to its original type to get type-safe access to its methods
+
 const mockUserService = UserService as jest.Mocked<typeof UserService>;
 
-// Mock the mailer module's sendEmail function.
-// This prevents actual emails from being sent during tests.
 jest.mock('../../../../src/communication/mailer');
 const mockSendEmail = sendEmail as jest.MockedFunction<typeof sendEmail>;
 
@@ -30,7 +24,6 @@ process.env.JWT_SECRET = 'test_jwt_secret_for_integration_tests';
 describe('Authentication Module Integration Tests', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        // Reset JWT_SECRET to ensure it's always available and consistent for each test.
         process.env.JWT_SECRET = 'test_jwt_secret_for_integration_tests';
     });
 
@@ -59,6 +52,7 @@ describe('Authentication Module Integration Tests', () => {
                 email: 'john.doe@example.com',
                 password: 'password123',
                 contactPhone: '1234567890',
+                address: "Nairobi"
             };
 
             const res = await request(app)
@@ -83,6 +77,7 @@ describe('Authentication Module Integration Tests', () => {
                 newUser.email,
                 'Verify your account',
                 expect.stringContaining('your verification code is:'),
+                expect.stringContaining('<strong>')
             );
         });
 
@@ -118,6 +113,8 @@ describe('Authentication Module Integration Tests', () => {
             const res = await request(app)
                 .post('/api/auth/verify')
                 .send({ email: mockUser.email, code: 123456 });
+
+            console.log(res.body)
 
             expect(res.statusCode).toEqual(200);
             expect(res.body).toEqual({ message: 'User verified successfully' });

@@ -2,7 +2,6 @@ import request from 'supertest';
 import app from '../../../../src/index';
 import { customerSupportService } from '../../../../src/components/customerSupport/customerSupport.service';
 
-// Mock the service
 jest.mock('../../../../src/components/customerSupport/customerSupport.service');
 const mockCustomerSupportService = customerSupportService as jest.Mocked<typeof customerSupportService>;
 
