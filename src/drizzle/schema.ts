@@ -152,6 +152,12 @@ export const Tickets = pgTable('tickets', {
     scannedByUser: integer('scanned_by_user').references(() => User.id),
 });
 
+export const StaffAssignments = pgTable('staff_assignments', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').notNull().references(() => User.id),
+    eventId: integer('event_id').notNull().references(() => Events.id),
+});
+
 
 export type TicketInsert = typeof Tickets.$inferInsert;
 export type TicketSelect = typeof Tickets.$inferSelect;

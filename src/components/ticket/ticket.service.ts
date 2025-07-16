@@ -1,7 +1,6 @@
 import db from "../../drizzle/db";
-import { Tickets, type TicketInsert } from "../../drizzle/schema";
+import {Tickets, Events, TicketTypes, Venue} from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
-import { v4 as uuidv4 } from 'uuid';
 
 export class TicketService {
     async getAllTickets(filters: { eventId?: number; userId?: number; isScanned?: boolean }) {
@@ -23,10 +22,23 @@ export class TicketService {
     async getTicketById(id: number) {
         if (isNaN(id) || id <= 0) throw new Error("Invalid ticket ID");
 
-        const result = await db.select().from(Tickets).where(eq(Tickets.id, id));
+        const result = await db
+            .select({
+                ticket: Tickets,
+                event: Events,
+                ticketType: TicketTypes,
+                venue: Venue
+            })
+            .from(Tickets)
+            .leftJoin(Events, eq(Tickets.eventId, Events.id))
+            .leftJoin(TicketTypes, eq(Tickets.ticketTypeId, TicketTypes.id))
+            .leftJoin(Venue, eq(Events.VenueId, Venue.id))
+            .where(eq(Tickets.id, id));
+
         if (result.length === 0) throw new Error(`Ticket with ID ${id} not found`);
         return result[0];
     }
+
 
     async createTicket(ticketData: { orderItemId: number; userId: number; eventId: number; ticketTypeId: number }) {
         const { orderItemId, userId, eventId, ticketTypeId } = ticketData;
@@ -81,6 +93,24 @@ export class TicketService {
 
         if (result.length === 0) throw new Error(`Ticket with ID ${id} not found for deletion`);
         return result[0];
+    }
+
+    async getByUserid(id: number) {
+        const result = await db
+            .select({
+                ticket: Tickets,
+                event: Events,
+                ticketType: TicketTypes,
+                venue: Venue
+            })
+            .from(Tickets)
+            .leftJoin(Events, eq(Tickets.eventId, Events.id))
+            .leftJoin(TicketTypes, eq(Tickets.ticketTypeId, TicketTypes.id))
+            .leftJoin(Venue, eq(Events.VenueId, Venue.id))
+            .where(eq(Tickets.userId, id))
+
+        if(result.length === 0) throw new Error(`Ticket with user ID ${id} not found`);
+        return result;
     }
 
     private generateUniqueCode(): string {

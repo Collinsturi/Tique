@@ -56,6 +56,31 @@ export class EventController {
             res.status(500).json({ message: "Failed to delete event", error });
         }
     }
+
+    getStaffAssignedEvents = async(req: Request, res: Response) => {
+         const email: string = req.body.email;
+
+         try{
+             const events = await eventService.getStaffAssignedEvents(email);
+
+             console.log(events);
+             res.json(events);
+         }catch(error){
+             res.status(500).json({ message: "Failed to fetch events", error });
+         }
+    }
+
+    getStaffScannedTickets = async(req: Request, res: Response) => {
+         const email: string = req.body.email;
+
+         try{
+             const events = await eventService.getStaffScannedTickets(email);
+             console.log(events);
+             res.json(events);
+         }catch(error){
+             res.status(500).json({ message: "Failed to fetch events", error });
+         }
+    }
 }
 
 export const eventController = new EventController();

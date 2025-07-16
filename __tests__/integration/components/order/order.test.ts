@@ -2,7 +2,6 @@ import request from 'supertest';
 import app from '../../../../src/index';
 import { orderService } from '../../../../src/components/order/order.service';
 
-// Mock the orderService
 jest.mock('../../../../src/components/order/order.service');
 const mockOrderService = orderService as jest.Mocked<typeof orderService>;
 

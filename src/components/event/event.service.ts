@@ -1,6 +1,7 @@
 import db from "../../drizzle/db";
-import { Events, EventInsert } from "../../drizzle/schema";
-import { eq, and } from "drizzle-orm";
+import {Events, EventInsert, Venue, TicketTypes, Tickets, StaffAssignments, User} from "../../drizzle/schema";
+import {eq, and, sql} from "drizzle-orm";
+
 
 export class EventService {
     // Fetch all events with optional filters
@@ -22,8 +23,16 @@ export class EventService {
         }
 
         const query = db
-            .select()
+            .select({
+                event: Events,
+                venue: Venue,
+                ticketTypes: TicketTypes,
+                ticket: Tickets,
+            })
             .from(Events)
+            .leftJoin(Venue, eq(Events.VenueId, Venue.id))
+            .leftJoin(TicketTypes, eq(TicketTypes.eventId, Events.id))
+            .leftJoin(Tickets, eq(Tickets.eventId, Events.id))
             .where(conditions.length > 0 ? and(...conditions) : undefined);
 
         return await query;
@@ -31,8 +40,21 @@ export class EventService {
 
     // Fetch a single event by ID
     async getEventById(id: number) {
-        const result = await db.select().from(Events).where(eq(Events.id, id));
-        return result[0];
+        const result = await db
+            .select({
+                event: Events,
+                venue: Venue,
+                ticketTypes: TicketTypes,
+                ticket: Tickets,
+            })
+            .from(Events)
+            .leftJoin(Venue, eq(Events.VenueId, Venue.id))
+            .leftJoin(TicketTypes, eq(TicketTypes.eventId, Events.id))
+            .leftJoin(Tickets, eq(Tickets.eventId, Events.id))
+            .where(eq(Events.id, id));
+
+        if (result.length === 0) throw new Error(`Event with ID ${id} not found`);
+        return result;
     }
 
     // Create a new event
@@ -51,6 +73,59 @@ export class EventService {
     async deleteEvent(id: number) {
         const result = await db.delete(Events).where(eq(Events.id, id)).returning();
         return result[0];
+    }
+
+    async getStaffAssignedEvents(email: string) {
+        const user = await db.select()
+            .from(User)
+            .where(eq(User.email, email))
+            .then(res => res[0]);
+
+        if (!user || user.role !== 'check_in_staff') {
+            throw new Error('User not found or not a staff member');
+        }
+
+        const events = await db
+            .select({
+                eventId: Events.id,
+                title: Events.title,
+                ticketsSold: sql<number>`COALESCE(SUM(${TicketTypes.quantitySold}), 0)`,
+                ticketsRemaining: sql<number>`COALESCE(SUM(${TicketTypes.quantityAvailable} - ${TicketTypes.quantitySold}), 0)`,
+            })
+            .from(Events)
+            .innerJoin(StaffAssignments, eq(StaffAssignments.eventId, Events.id))
+            .leftJoin(TicketTypes, eq(TicketTypes.eventId, Events.id))
+            .where(eq(StaffAssignments.userId, user.id))
+            .groupBy(Events.id, Events.title);
+
+        return events;
+    }
+
+    async getStaffScannedTickets(email: string) {
+        const user = await db.select()
+            .from(User)
+            .where(eq(User.email, email))
+            .then(res => res[0]);
+
+        if (!user || user.role !== 'check_in_staff') {
+            throw new Error('User not found or not a staff member');
+        }
+
+        const events = await db
+            .select({
+                eventId: Events.id,
+                title: Events.title,
+                ticketsSold: sql<number>`COALESCE(SUM(${TicketTypes.quantitySold}),0)`,
+                ticketScanned: sql<number>`COALESCE(SUM(${Tickets.isScanned == true} - ${Tickets.isScanned == false}),0)`
+            })
+            .from(Events)
+            .innerJoin(StaffAssignments, eq(StaffAssignments.eventId, Events.id))
+            .leftJoin(TicketTypes, eq(TicketTypes.eventId, Events.id))
+            .leftJoin(Tickets, eq(Tickets.eventId, Events.id))
+            .where(eq(StaffAssignments.userId, user.id))
+            .groupBy(Events.id, Events.title);
+
+        return events;
     }
 }
 

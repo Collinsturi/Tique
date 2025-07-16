@@ -81,6 +81,19 @@ export class TicketController {
             res.status(404).json({ message: error.message || "Failed to delete ticket" });
         }
     }
+
+    getByUserid = async (req: Request, res: Response) => {
+        const id = Number(req.params.id);
+        if (isNaN(id)) return res.status(400).json({ message: "Invalid user ID" });
+
+        try{
+            const tickets = await ticketService.getByUserid(id);
+            res.json(tickets);
+        }catch(error: any) {
+            console.error(`Error getting tickets with user ID ${id}:`, error);
+            res.status(200).json({ message: error.message || "Failed to get tickets" });
+        }
+    }
 }
 
 export const ticketController = new TicketController();

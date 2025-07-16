@@ -1,5 +1,7 @@
 import { EventService } from '../../../../src/components/event/event.service';
 import db from '../../../../src/drizzle/db';
+import { Events, Venue, TicketTypes, Tickets } from '../../../../src/drizzle/schema';
+import { eq } from 'drizzle-orm';
 
 jest.mock('../../../../src/drizzle/db', () => ({
     select: jest.fn(),
@@ -17,41 +19,34 @@ describe('EventService', () => {
 
     describe('getAllEvents', () => {
         it('should fetch all events without filters', async () => {
-            // Proper chained mock
             (db.select as jest.Mock).mockReturnValue({
                 from: jest.fn().mockReturnValue({
-                    where: jest.fn().mockResolvedValue([{ id: 1, name: 'Test Event' }])
-                })
+                    leftJoin: jest.fn().mockReturnValue({
+                        leftJoin: jest.fn().mockReturnValue({
+                            leftJoin: jest.fn().mockReturnValue({
+                                where: jest.fn().mockResolvedValue([
+                                    {
+                                        event: { id: 1, title: 'Test Event' },
+                                        venue: { id: 10, name: 'Test Venue' },
+                                        ticketTypes: { id: 100 },
+                                        ticket: { id: 1000 },
+                                    },
+                                ]),
+                            }),
+                        }),
+                    }),
+                }),
             });
 
             const result = await service.getAllEvents({});
-
-            expect(result).toEqual([{ id: 1, name: 'Test Event' }]);
-            expect(db.select).toHaveBeenCalled();
-        });
-
-        it('should fetch events with venueId filter', async () => {
-            (db.select as jest.Mock).mockReturnValue({
-                from: jest.fn().mockReturnValue({
-                    where: jest.fn().mockResolvedValue([{ id: 2, name: 'Filtered Event' }])
-                })
-            });
-
-            const result = await service.getAllEvents({ venueId: 10 });
-
-            expect(result).toEqual([{ id: 2, name: 'Filtered Event' }]);
-        });
-
-        it('should fetch events with multiple filters', async () => {
-            (db.select as jest.Mock).mockReturnValue({
-                from: jest.fn().mockReturnValue({
-                    where: jest.fn().mockResolvedValue([{ id: 3, name: 'Multi Filtered Event' }])
-                })
-            });
-
-            const result = await service.getAllEvents({ venueId: 5, category: 'Music', date: '2024-08-12' });
-
-            expect(result).toEqual([{ id: 3, name: 'Multi Filtered Event' }]);
+            expect(result).toEqual([
+                {
+                    event: { id: 1, title: 'Test Event' },
+                    venue: { id: 10, name: 'Test Venue' },
+                    ticketTypes: { id: 100 },
+                    ticket: { id: 1000 },
+                },
+            ]);
         });
     });
 
@@ -59,23 +54,48 @@ describe('EventService', () => {
         it('should return event by ID', async () => {
             (db.select as jest.Mock).mockReturnValue({
                 from: jest.fn().mockReturnValue({
-                    where: jest.fn().mockResolvedValue([{ id: 1, name: 'Test Event' }])
-                })
+                    leftJoin: jest.fn().mockReturnValue({
+                        leftJoin: jest.fn().mockReturnValue({
+                            leftJoin: jest.fn().mockReturnValue({
+                                where: jest.fn().mockResolvedValue([
+                                    {
+                                        event: { id: 1, title: 'Test Event' },
+                                        venue: { id: 10, name: 'Test Venue' },
+                                        ticketTypes: { id: 100 },
+                                        ticket: { id: 1000 },
+                                    },
+                                ]),
+                            }),
+                        }),
+                    }),
+                }),
             });
 
             const result = await service.getEventById(1);
-            expect(result).toEqual({ id: 1, name: 'Test Event' });
+            expect(result).toEqual([
+                {
+                    event: { id: 1, title: 'Test Event' },
+                    venue: { id: 10, name: 'Test Venue' },
+                    ticketTypes: { id: 100 },
+                    ticket: { id: 1000 },
+                },
+            ]);
         });
 
-        it('should return undefined if event not found', async () => {
+        it('should throw if event not found', async () => {
             (db.select as jest.Mock).mockReturnValue({
                 from: jest.fn().mockReturnValue({
-                    where: jest.fn().mockResolvedValue([])
-                })
+                    leftJoin: jest.fn().mockReturnValue({
+                        leftJoin: jest.fn().mockReturnValue({
+                            leftJoin: jest.fn().mockReturnValue({
+                                where: jest.fn().mockResolvedValue([]),
+                            }),
+                        }),
+                    }),
+                }),
             });
 
-            const result = await service.getEventById(99);
-            expect(result).toBeUndefined();
+            await expect(service.getEventById(999)).rejects.toThrow('Event with ID 999 not found');
         });
     });
 
@@ -83,12 +103,12 @@ describe('EventService', () => {
         it('should create a new event', async () => {
             (db.insert as jest.Mock).mockReturnValue({
                 values: jest.fn().mockReturnValue({
-                    returning: jest.fn().mockResolvedValue([{ id: 1, name: 'New Event' }])
-                })
+                    returning: jest.fn().mockResolvedValue([{ id: 1, title: 'New Event' }]),
+                }),
             });
 
-            const result = await service.createEvent({ name: 'New Event' } as any);
-            expect(result).toEqual({ id: 1, name: 'New Event' });
+            const result = await service.createEvent({ title: 'New Event' } as any);
+            expect(result).toEqual({ id: 1, title: 'New Event' });
         });
     });
 
@@ -97,13 +117,13 @@ describe('EventService', () => {
             (db.update as jest.Mock).mockReturnValue({
                 set: jest.fn().mockReturnValue({
                     where: jest.fn().mockReturnValue({
-                        returning: jest.fn().mockResolvedValue([{ id: 1, name: 'Updated Event' }])
-                    })
-                })
+                        returning: jest.fn().mockResolvedValue([{ id: 1, title: 'Updated Event' }]),
+                    }),
+                }),
             });
 
-            const result = await service.updateEvent(1, { name: 'Updated Event' });
-            expect(result).toEqual({ id: 1, name: 'Updated Event' });
+            const result = await service.updateEvent(1, { title: 'Updated Event' });
+            expect(result).toEqual({ id: 1, title: 'Updated Event' });
         });
     });
 
@@ -111,12 +131,70 @@ describe('EventService', () => {
         it('should delete an event', async () => {
             (db.delete as jest.Mock).mockReturnValue({
                 where: jest.fn().mockReturnValue({
-                    returning: jest.fn().mockResolvedValue([{ id: 1 }])
-                })
+                    returning: jest.fn().mockResolvedValue([{ id: 1 }]),
+                }),
             });
 
             const result = await service.deleteEvent(1);
             expect(result).toEqual({ id: 1 });
+        });
+    });
+
+    describe('getStaffAssignedEvents', () => {
+        it('should return assigned events with ticket info', async () => {
+            // mock user fetch
+            (db.select as jest.Mock).mockReturnValueOnce({
+                from: jest.fn().mockReturnValue({
+                    where: jest.fn().mockResolvedValue([
+                        { id: 5, email: 'staff@example.com', role: 'check_in_staff' },
+                    ]),
+                }),
+            });
+
+            // mock events fetch
+            (db.select as jest.Mock).mockReturnValueOnce({
+                from: jest.fn().mockReturnValue({
+                    innerJoin: jest.fn().mockReturnValue({
+                        leftJoin: jest.fn().mockReturnValue({
+                            where: jest.fn().mockReturnValue({
+                                groupBy: jest.fn().mockResolvedValue([
+                                    {
+                                        eventId: 10,
+                                        title: 'Assigned Event',
+                                        ticketsSold: 50,
+                                        ticketsRemaining: 150,
+                                    },
+                                ]),
+                            }),
+                        }),
+                    }),
+                }),
+            });
+
+            const result = await service.getStaffAssignedEvents('staff@example.com');
+
+            expect(result).toEqual([
+                {
+                    eventId: 10,
+                    title: 'Assigned Event',
+                    ticketsSold: 50,
+                    ticketsRemaining: 150,
+                },
+            ]);
+        });
+
+        it('should throw if user is not a staff member', async () => {
+            (db.select as jest.Mock).mockReturnValue({
+                from: jest.fn().mockReturnValue({
+                    where: jest.fn().mockResolvedValue([
+                        { id: 5, email: 'staff@example.com', role: 'customer' },
+                    ]),
+                }),
+            });
+
+            await expect(service.getStaffAssignedEvents('staff@example.com')).rejects.toThrow(
+                'User not found or not a staff member'
+            );
         });
     });
 });

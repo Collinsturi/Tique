@@ -9,5 +9,6 @@ router.get("/tickets/:id", asyncHandler(ticketController.getById));
 router.post("/tickets", asyncHandler(ticketController.create));
 router.put("/tickets/:id/scan", asyncHandler(ticketController.scan));
 router.delete("/tickets/:id", asyncHandler(ticketController.delete));
+router.get("/tickets/user/:id", asyncHandler(ticketController.getByUserid));
 
 export default router;

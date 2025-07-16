@@ -6,7 +6,8 @@ export class VenueService {
 
     async getAllVenues() {
         try {
-            return await db.select().from(Venue);
+            return await db.select()
+                .from(Venue);
         } catch (error) {
             console.error("Error fetching venues:", error);
             throw new Error("Failed to fetch venues");
