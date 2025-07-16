@@ -58,7 +58,7 @@ export class EventController {
     }
 
     getStaffAssignedEvents = async(req: Request, res: Response) => {
-         const email: string = req.body.email;
+         const email: string = req.params.email;
 
          try{
              const events = await eventService.getStaffAssignedEvents(email);
@@ -71,7 +71,7 @@ export class EventController {
     }
 
     getStaffScannedTickets = async(req: Request, res: Response) => {
-         const email: string = req.body.email;
+         const email: string = req.params.email;
 
          try{
              const events = await eventService.getStaffScannedTickets(email);

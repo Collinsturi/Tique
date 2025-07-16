@@ -10,7 +10,7 @@ router.post("/events", asyncHandler(eventController.create));
 router.put("/events/:id", asyncHandler(eventController.update));
 router.delete("/events/:id", asyncHandler(eventController.delete));
 
-router.get("/events/staff/assigned", asyncHandler(eventController.getStaffAssignedEvents));
-router.get("/events/staff/scanned", asyncHandler(eventController.getStaffScannedTickets));
+router.get("/events/staff/assigned/:email", asyncHandler(eventController.getStaffAssignedEvents));
+router.get("/events/staff/scanned/:email", asyncHandler(eventController.getStaffScannedTickets));
 
 export default router;
