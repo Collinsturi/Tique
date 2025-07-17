@@ -122,6 +122,16 @@ export class EventController {
         }
     };
 
+    getCurrentOrganizerEvents = async(req: Request, res: Response) => {
+        const email: string = req.params.email;
+
+        try{
+            const events = await eventService.getCurrentOrganizerEvents(email);
+            res.json(events);
+        }catch(error){
+            res.status(500).json({ message: "Failed to fetch events", error });
+        }
+    }
 }
 
 export const eventController = new EventController();

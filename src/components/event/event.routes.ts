@@ -20,6 +20,7 @@ router.get("/events/organizer/:email/upcoming", asyncHandler(eventController.get
 router.post("/events/organizer/:email/assignStaff", asyncHandler(eventController.assignStaff))
 
 // Get current events for organizer
+router.get("/events/organizer/current/:email", asyncHandler(eventController.getCurrentOrganizerEvents))
 
 // Get past events for organizer
 

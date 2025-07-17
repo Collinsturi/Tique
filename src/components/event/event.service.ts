@@ -1,7 +1,7 @@
 import db from "../../drizzle/db";
 import {Events, EventInsert, Venue, TicketTypes, Tickets, StaffAssignments, User} from "../../drizzle/schema";
-import {eq, and, sql} from "drizzle-orm";
-
+import {eq, and, sql, lte, gte } from "drizzle-orm";
+import { addDays, startOfToday } from 'date-fns';
 
 export class EventService {
     // Fetch all events with optional filters
@@ -220,6 +220,46 @@ export class EventService {
                 .insert(StaffAssignments)
                 .values({ userId: staff.id, eventId });
         }
+    }
+
+    async getCurrentOrganizerEvents(organizerEmail: string) {
+        // 1) load & verify the requester
+        const requester = await db
+            .select({ id: User.id, role: User.role })
+            .from(User)
+            .where(eq(User.email, organizerEmail))
+            .then(r => r[0]);
+
+        if (!requester || !['admin', 'organizer'].includes(requester.role)) {
+            throw new Error('Only admin or organizer can fetch organizer current events');
+        }
+
+        // 2) Get today's date and 7 days later
+        const today = startOfToday();
+        const sevenDaysLater = addDays(today, 7);
+
+        // 3) Query organizer events happening within the next 7 days
+        const events = await db
+            .select({
+                eventId: Events.id,
+                title: Events.title,
+                eventDate: Events.eventDate,
+                eventTime: Events.eventTime,
+                ticketsSold: sql<number>`COALESCE(SUM(${TicketTypes.quantitySold}), 0)`,
+                ticketsScanned: sql<number>`COALESCE(SUM(CASE WHEN ${Tickets.isScanned} = true THEN 1 ELSE 0 END), 0)`,
+            })
+            .from(Events)
+            .leftJoin(StaffAssignments, eq(StaffAssignments.eventId, Events.id))
+            .leftJoin(TicketTypes, eq(TicketTypes.eventId, Events.id))
+            .leftJoin(Tickets, eq(Tickets.eventId, Events.id))
+            .where(and(
+                eq(Events.organizerId, requester.id),
+                gte(Events.eventDate, today),
+                lte(Events.eventDate, sevenDaysLater)
+            ))
+            .groupBy(Events.id, Events.title, Events.eventDate, Events.eventTime);
+
+        return events;
     }
 }
 
