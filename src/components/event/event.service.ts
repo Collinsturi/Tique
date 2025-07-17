@@ -1,5 +1,14 @@
 import db from "../../drizzle/db";
-import {Events, EventInsert, Venue, TicketTypes, Tickets, StaffAssignments, User} from "../../drizzle/schema";
+import {
+    Events,
+    EventInsert,
+    Venue,
+    TicketTypes,
+    Tickets,
+    StaffAssignments,
+    User,
+    userRoles
+} from "../../drizzle/schema";
 import {eq, and, sql, lte, gte, lt} from "drizzle-orm";
 import { addDays, startOfToday } from 'date-fns';
 
@@ -295,6 +304,15 @@ export class EventService {
             .groupBy(Events.id, Events.title, Events.eventDate, Events.eventTime);
 
         return events;
+    }
+
+    async getAvailableStaff(){
+        const availableStaff = await db
+            .select()
+            .from(User)
+            .where(eq(User.role, 'check_in_staff'))
+
+        return availableStaff;
     }
 }
 

@@ -98,6 +98,7 @@ export class EventController {
          }
     }
 
+    avail
     assignStaff = async (req: Request, res: Response) => {
         try {
             const email: string = req.params.email;
@@ -141,8 +142,20 @@ export class EventController {
             const events = await eventService.getPastOrganizerEvents(email);
             res.json(events);
         }catch(error){
-            console.error("Assign staff error:", error);
-            return res.status(500).json({ message: "Failed to assign staff.", error: (error as Error).message });
+            console.error("Past events error:", error);
+            return res.status(500).json({ message: "Failed to get past events.", error: (error as Error).message });
+        }
+    }
+
+    getAvailableStaff = async(req: Request, res: Response) => {
+        try{
+            const availableStaff = await eventService.getAvailableStaff();
+
+            res.json(availableStaff);
+        }catch(error){
+            console.error("Available staff error:", error);
+            return res.status(500).json({ message: "Failed to get available staff.", error: (error as Error).message });
+
         }
     }
 }
