@@ -129,7 +129,20 @@ export class EventController {
             const events = await eventService.getCurrentOrganizerEvents(email);
             res.json(events);
         }catch(error){
-            res.status(500).json({ message: "Failed to fetch events", error });
+            console.error("Assign staff error:", error);
+            return res.status(500).json({ message: "Failed to assign staff.", error: (error as Error).message });
+        }
+    }
+
+    getPastOrganizerEvents = async (req: Request, res: Response) => {
+        const email: string = req.params.email;
+
+        try {
+            const events = await eventService.getPastOrganizerEvents(email);
+            res.json(events);
+        }catch(error){
+            console.error("Assign staff error:", error);
+            return res.status(500).json({ message: "Failed to assign staff.", error: (error as Error).message });
         }
     }
 }

@@ -1,6 +1,6 @@
 import db from "../../drizzle/db";
 import {Events, EventInsert, Venue, TicketTypes, Tickets, StaffAssignments, User} from "../../drizzle/schema";
-import {eq, and, sql, lte, gte } from "drizzle-orm";
+import {eq, and, sql, lte, gte, lt} from "drizzle-orm";
 import { addDays, startOfToday } from 'date-fns';
 
 export class EventService {
@@ -184,7 +184,7 @@ export class EventService {
         }
 
         // 3) for each staff email: check user exists & is check_in_staff, then insert
-        for (const email of staffEmails) {
+        for (const email of staffEmail) {
             const staff = await db
                 .select({ id: User.id, role: User.role })
                 .from(User)
@@ -224,11 +224,11 @@ export class EventService {
 
     async getCurrentOrganizerEvents(organizerEmail: string) {
         // 1) load & verify the requester
-        const requester = await db
-            .select({ id: User.id, role: User.role })
+        const [requester] = await Promise.all([db
+            .select({id: User.id, role: User.role})
             .from(User)
             .where(eq(User.email, organizerEmail))
-            .then(r => r[0]);
+            .then(r => r[0])]);
 
         if (!requester || !['admin', 'organizer'].includes(requester.role)) {
             throw new Error('Only admin or organizer can fetch organizer current events');
@@ -256,6 +256,41 @@ export class EventService {
                 eq(Events.organizerId, requester.id),
                 gte(Events.eventDate, today),
                 lte(Events.eventDate, sevenDaysLater)
+            ))
+            .groupBy(Events.id, Events.title, Events.eventDate, Events.eventTime);
+
+        return events;
+    }
+
+    async getPastOrganizerEvents(organizerEmail: string) {
+        const requester = await db
+            .select({ id: User.id, role: User.role })
+            .from(User)
+            .where(eq(User.email, organizerEmail))
+            .then(r => r[0]);
+
+        if (!requester || !['admin', 'organizer'].includes(requester.role)) {
+            throw new Error('Only admin or organizer can fetch organizer past events');
+        }
+
+        const today = new Date();
+
+        const events = await db
+            .select({
+                eventId: Events.id,
+                title: Events.title,
+                eventDate: Events.eventDate,
+                eventTime: Events.eventTime,
+                ticketsSold: sql<number>`COALESCE(SUM(${TicketTypes.quantitySold}), 0)`,
+                ticketsScanned: sql<number>`COALESCE(SUM(CASE WHEN ${Tickets.isScanned} = true THEN 1 ELSE 0 END), 0)`,
+            })
+            .from(Events)
+            .leftJoin(StaffAssignments, eq(StaffAssignments.eventId, Events.id))
+            .leftJoin(TicketTypes, eq(TicketTypes.eventId, Events.id))
+            .leftJoin(Tickets, eq(Tickets.eventId, Events.id))
+            .where(and(
+                eq(Events.organizerId, requester.id),
+                lt(Events.eventDate, today)
             ))
             .groupBy(Events.id, Events.title, Events.eventDate, Events.eventTime);
 

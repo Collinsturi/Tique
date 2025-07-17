@@ -23,6 +23,7 @@ router.post("/events/organizer/:email/assignStaff", asyncHandler(eventController
 router.get("/events/organizer/current/:email", asyncHandler(eventController.getCurrentOrganizerEvents))
 
 // Get past events for organizer
+router.get("/events/organizer/past/:email", asyncHandler(eventController.getPastOrganizerEvents))
 
 
 export default router;
