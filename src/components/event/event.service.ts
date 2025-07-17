@@ -116,7 +116,7 @@ export class EventService {
                 eventId: Events.id,
                 title: Events.title,
                 ticketsSold: sql<number>`COALESCE(SUM(${TicketTypes.quantitySold}),0)`,
-                ticketScanned: sql<number>`COALESCE(SUM(${Tickets.isScanned == true} - ${Tickets.isScanned == false}),0)`
+                ticketsScanned: sql<number>`COALESCE(SUM(CASE WHEN ${Tickets.isScanned} = true THEN 1 ELSE 0 END), 0)`,
             })
             .from(Events)
             .innerJoin(StaffAssignments, eq(StaffAssignments.eventId, Events.id))
@@ -126,6 +126,33 @@ export class EventService {
             .groupBy(Events.id, Events.title);
 
         return events;
+    }
+
+    async getUpcomingEvents(email: string) {
+        const user = await db.select()
+            .from(User)
+            .where(eq(User.email, email))
+            .then(res => res[0]);
+
+        if (!user || user.role !== 'organizer') {
+            throw new Error('User not found or not a staff member');
+        }
+
+        const organizerEventOrganizer = await db
+            .select({
+                eventId: Events.id,
+                title: Events.title,
+                ticketsSold: sql<number>`COALESCE(SUM(${TicketTypes.quantitySold}), 0)`,
+                ticketsScanned: sql<number>`COALESCE(SUM(CASE WHEN ${Tickets.isScanned} = true THEN 1 ELSE 0 END), 0)`,
+            })
+            .from(Events)
+            .innerJoin(StaffAssignments, eq(StaffAssignments.eventId, Events.id))
+            .leftJoin(TicketTypes, eq(TicketTypes.eventId, Events.id))
+            .leftJoin(Tickets, eq(Tickets.eventId, Events.id))
+            .where(eq(StaffAssignments.userId, user.id))
+            .groupBy(Events.id, Events.title);
+
+        return organizerEventOrganizer;
     }
 }
 

@@ -13,4 +13,14 @@ router.delete("/events/:id", asyncHandler(eventController.delete));
 router.get("/events/staff/assigned/:email", asyncHandler(eventController.getStaffAssignedEvents));
 router.get("/events/staff/scanned/:email", asyncHandler(eventController.getStaffScannedTickets));
 
+//Get organizer upcoming events
+router.get("/events/organizer/:email/upcoming", asyncHandler(eventController.getUpcomingEvents));
+
+//Assign events staff for events
+
+// Get current events for organizer
+
+// Get past events for organizer
+
+
 export default router;

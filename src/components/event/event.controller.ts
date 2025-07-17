@@ -81,6 +81,22 @@ export class EventController {
              res.status(500).json({ message: "Failed to fetch events", error });
          }
     }
+
+    getUpcomingEvents = async(req: Request, res: Response) => {
+         const email: string = req.params.email;
+
+         try {
+             const upcomingEvents = await eventService.getUpcomingEvents(email);
+
+             if(upcomingEvents.length > 0){
+                 res.json(upcomingEvents);
+             }
+             res.status(200).json({message: "No upcoming events found."});
+
+         }catch(error){
+             res.status(500).json({ message: "Failed to fetch events", error });
+         }
+    }
 }
 
 export const eventController = new EventController();

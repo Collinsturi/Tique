@@ -15,7 +15,7 @@ import {
 // ========================
 // User Roles Enum
 // ========================
-export const userRoles = ['admin', 'customer', 'check_in_staff'] as const;
+export const userRoles = ['admin', 'customer', 'check_in_staff', `organizer`] as const;
 export const userRoleEnum = pgEnum('user_role', userRoles);
 export type UserRole = typeof userRoles[number];
 
