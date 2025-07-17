@@ -105,6 +105,7 @@ export const Events = pgTable('Events', {
     eventTime: time('event_time').notNull(),
     createdAt: timestamp('createdAt').defaultNow().notNull(),
     updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+    organizerId:  integer('organizer_id').notNull().references(() => User.id)
 });
 
 // Ticket Types Table

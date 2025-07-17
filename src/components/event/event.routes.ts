@@ -17,6 +17,7 @@ router.get("/events/staff/scanned/:email", asyncHandler(eventController.getStaff
 router.get("/events/organizer/:email/upcoming", asyncHandler(eventController.getUpcomingEvents));
 
 //Assign events staff for events
+router.post("/events/organizer/:email/assignStaff", asyncHandler(eventController.assignStaff))
 
 // Get current events for organizer
 

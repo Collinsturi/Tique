@@ -97,6 +97,31 @@ export class EventController {
              res.status(500).json({ message: "Failed to fetch events", error });
          }
     }
+
+    assignStaff = async (req: Request, res: Response) => {
+        try {
+            const email: string = req.params.email;
+            const staffEmails: string[] = req.body.staffEmails; // expects: { staffEmails: ["a@a.com", "b@b.com"], eventId: 2 }
+            const eventId: number = Number(req.body.eventId);
+
+            if (!Array.isArray(staffEmails) || staffEmails.length === 0) {
+                return res.status(400).json({ message: "No staff emails provided." });
+            }
+
+            if (isNaN(eventId)) {
+                return res.status(400).json({ message: "Invalid event ID." });
+            }
+
+            await eventService.assignStaff(email, eventId, staffEmails);
+
+            return res.status(200).json({ message: "Staff assigned successfully." });
+
+        } catch (error) {
+            console.error("Assign staff error:", error);
+            return res.status(500).json({ message: "Failed to assign staff.", error: (error as Error).message });
+        }
+    };
+
 }
 
 export const eventController = new EventController();

@@ -154,6 +154,73 @@ export class EventService {
 
         return organizerEventOrganizer;
     }
+
+    async assignStaff(requesterEmail: string, staffEmail: [string], eventId: number,) {
+        // 1) load & verify the requester
+        const requester = await db
+            .select({ id: User.id, role: User.role })
+            .from(User)
+            .where(eq(User.email, requesterEmail))
+            .then(r => r[0]);
+
+        if (!requester || !['admin', 'organizer'].includes(requester.role)) {
+            throw new Error('Only admin or organizer can assign staff');
+        }
+
+        // 2) if organizer, ensure they own this event
+        if (requester.role === 'organizer') {
+            const ev = await db
+                .select({ org: Events.organizerId })
+                .from(Events)
+                .where(and(
+                    eq(Events.id, eventId),
+                    eq(Events.organizerId, requester.id),
+                ))
+                .then(r => r[0]);
+
+            if (!ev) {
+                throw new Error('Organizer may only assign staff on their own events');
+            }
+        }
+
+        // 3) for each staff email: check user exists & is check_in_staff, then insert
+        for (const email of staffEmails) {
+            const staff = await db
+                .select({ id: User.id, role: User.role })
+                .from(User)
+                .where(eq(User.email, email))
+                .then(r => r[0]);
+
+            if (!staff) {
+                console.warn(`No such user: ${email}, skipping`);
+                continue;
+            }
+            if (staff.role !== 'check_in_staff') {
+                console.warn(`User ${email} is not check_in_staff, skipping`);
+                continue;
+            }
+
+            // avoid duplicates
+            const already = await db
+                .select()
+                .from(StaffAssignments)
+                .where(and(
+                    eq(StaffAssignments.eventId, eventId),
+                    eq(StaffAssignments.userId, staff.id),
+                ))
+                .then(r => r.length > 0);
+
+            if (already) {
+                console.info(`Staff ${email} already assigned to event ${eventId}`);
+                continue;
+            }
+
+            // finally, insert
+            await db
+                .insert(StaffAssignments)
+                .values({ userId: staff.id, eventId });
+        }
+    }
 }
 
 export const eventService = new EventService();
