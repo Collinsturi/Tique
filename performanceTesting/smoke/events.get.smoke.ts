@@ -7,7 +7,7 @@ export const options = {
 };
 
 export default function () {
-    const url = 'http://localhost:8081/events';
+    const url = 'http://localhost:8081/api/events';
 
     const params = {
         headers: {
@@ -20,10 +20,10 @@ export default function () {
 
     check(res, {
         'status is 200': (r) => r.status === 200,
-        'has data array': (r) => {
+        'response is an array (even if empty)': (r) => {
             try {
                 const body = JSON.parse(r.body as string);
-                return Array.isArray(body.data);
+                return Array.isArray(body);
             } catch {
                 return false;
             }
