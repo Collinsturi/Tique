@@ -15,13 +15,13 @@ export const options = {
     ],
     ext: {
         loadimpact: {
-            name: 'events GET Breakpoint Test',
+            name: 'tickets GET BY ID Breakpoint Test',
         },
     },
 };
 
 export default function () {
-    const res = http.get(`${BASE_URL}/api/events`, {
+    const res = http.get(`${BASE_URL}/api/tickets/6`, {
         headers: {
             'Content-Type': 'application/json',
         },
@@ -29,10 +29,14 @@ export default function () {
 
     check(res, {
         'status is 200': (r) => r.status === 200,
-        'response is an array (even if empty)': (r) => {
+        'response is an object with expected keys': (r) => {
             try {
                 const body = JSON.parse(r.body as string);
-                return Array.isArray(body);
+                return body && typeof body === 'object' &&
+                    'ticket' in body &&
+                    'event' in body &&
+                    'ticketType' in body &&
+                    'venue' in body;
             } catch {
                 return false;
             }
