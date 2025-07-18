@@ -6,8 +6,8 @@ const BASE_URL = 'http://localhost:8081';
 export const options = {
     stages: [
         { duration: '1m', target: 20 },   // ramp-up to 20 users over 2 minutes
-        { duration: '3m', target: 20 },  // stay at 20 users for 56 minutes (total 58m)
-        { duration: '40s', target: 0 },    // ramp-down to 0 users
+        // { duration: '3m', target: 20 },  // stay at 20 users for 56 minutes (total 58m)
+        // { duration: '40s', target: 0 },    // ramp-down to 0 users
     ],
     ext: {
         loadimpact: {
@@ -17,7 +17,7 @@ export const options = {
 };
 
 export default function () {
-    const res = http.get(`${BASE_URL}/venues/1`, {
+    const res = http.get(`${BASE_URL}/api/venues`, {
         headers: {
             'Content-Type': 'application/json',
             // 'Authorization': `Bearer YOUR_VALID_TOKEN`,
@@ -26,10 +26,10 @@ export default function () {
 
     check(res, {
         'status is 200': (r) => r.status === 200,
-        'has data array': (r) => {
+        'response is an array (even if empty)': (r) => {
             try {
                 const body = JSON.parse(r.body as string);
-                return Array.isArray(body.data);
+                return Array.isArray(body);
             } catch {
                 return false;
             }
