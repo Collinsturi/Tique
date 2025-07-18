@@ -159,6 +159,15 @@ export const StaffAssignments = pgTable('staff_assignments', {
     eventId: integer('event_id').notNull().references(() => Events.id),
 });
 
+export const TicketLogs = pgTable('ticket_logs', {
+    id: serial('id').primaryKey(),
+    ticketId: integer('ticket_id').notNull().references(() => Tickets.id),
+    isValid: boolean("is_valid").default(false).notNull(),
+    reasonForOverride: varchar().notNull(),
+    overriddenByUserId: integer('overridden_by_user_id').references(() => User.id),
+    createdAt: timestamp('created_at').defaultNow(),
+});
+
 
 export type TicketInsert = typeof Tickets.$inferInsert;
 export type TicketSelect = typeof Tickets.$inferSelect;
@@ -186,3 +195,6 @@ export type PaymentSelect = typeof Payment.$inferSelect;
 
 export type UserInsert = typeof User.$inferInsert;
 export type UserSelect = typeof User.$inferSelect;
+
+export type TicketLogsInsert = typeof Tickets.$inferInsert;
+export type TicketLogsSelect = typeof Tickets.$inferSelect;

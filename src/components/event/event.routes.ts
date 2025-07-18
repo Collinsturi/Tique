@@ -19,13 +19,13 @@ router.get("/events/organizer/:email/upcoming", asyncHandler(eventController.get
 //Get available staff
 router.get("/events/staff/available", asyncHandler(eventController.getAvailableStaff));
 //Assign events staff for events
-router.post("/events/organizer/:email/assignStaff", asyncHandler(eventController.assignStaff))
+router.post("/events/organizer/:email/assignStaff", asyncHandler(eventController.assignStaff));
 
 // Get current events for organizer
-router.get("/events/organizer/current/:email", asyncHandler(eventController.getCurrentOrganizerEvents))
+router.get("/events/organizer/current/:email", asyncHandler(eventController.getCurrentOrganizerEvents));
 
 // Get past events for organizer
-router.get("/events/organizer/past/:email", asyncHandler(eventController.getPastOrganizerEvents))
+router.get("/events/organizer/past/:email", asyncHandler(eventController.getPastOrganizerEvents));
 
 
 export default router;

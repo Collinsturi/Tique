@@ -11,4 +11,6 @@ router.put("/tickets/:id/scan", asyncHandler(ticketController.scan));
 router.delete("/tickets/:id", asyncHandler(ticketController.delete));
 router.get("/tickets/user/:id", asyncHandler(ticketController.getByUserid));
 
+router.get("/tickets/logs", asyncHandler(ticketController.overrideTicket))
+
 export default router;

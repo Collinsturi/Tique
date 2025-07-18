@@ -116,6 +116,55 @@ export class TicketService {
     private generateUniqueCode(): string {
         return `ETIQUET-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
     }
+
+    async overrideTicket(ticketCode: string, reasonForOverride: string, staffEmail: string) {
+        // 1. Load the staff user by email
+        const staffUser = await db
+            .select({ id: User.id, role: User.role })
+            .from(User)
+            .where(eq(User.email, staffEmail))
+            .then(r => r[0]);
+
+        // 2. Validate staff role
+        if (!staffUser || staffUser.role !== 'check_in_staff') {
+            throw new Error('Unauthorized: Only check-in staff can override tickets.');
+        }
+
+        // 3. Load the ticket by unique code
+        const ticket = await db
+            .select()
+            .from(Tickets)
+            .where(eq(Tickets.uniqueCode, ticketCode))
+            .then(r => r[0]);
+
+        if (!ticket) {
+            throw new Error('Ticket not found.');
+        }
+
+        // 4. Update the ticket to mark it as scanned (override)
+        await db
+            .update(Tickets)
+            .set({
+                isScanned: true,
+                scannedAt: new Date(),
+                scannedByUser: staffUser.id,
+            })
+            .where(eq(Tickets.id, ticket.id));
+
+        // 5. Insert the override log into TicketLogs
+        await db.insert(TicketLogs).values({
+            ticketId: ticket.id,
+            isValid: true,
+            reasonForOverride,
+            overriddenByUserId: staffUser.id,
+            createdAt: new Date()
+        });
+
+        return {
+            message: 'Ticket successfully overridden and logged.',
+            ticketId: ticket.id
+        };
+    }
 }
 
 export const ticketService = new TicketService();

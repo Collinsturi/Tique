@@ -94,6 +94,18 @@ export class TicketController {
             res.status(200).json({ message: error.message || "Failed to get tickets" });
         }
     }
+    overrideTicket = async (req: Request, res: Response) => {
+        const ticketCode = req.body.ticketCode;
+        const reasonForOverride = req.body.reasonForOverride;
+        const email = req.body.staffEmail;
+
+        try {
+            await ticketService.overrideTicket(ticketCode, reasonForOverride, email);
+        }catch(error: any) {
+            console.error(`Error override ticket with ID ${ticketCode}:`, error);
+            res.status(500).json({ message: error.message || "Failed to override ticket" });
+        }
+    }
 }
 
 export const ticketController = new TicketController();
