@@ -8,6 +8,7 @@ import customerSupportRoutes from "./components/customerSupport/customerSupport.
 import paymentRoutes from "./components/payment/payment.routes"
 import authRoutes from "./components/authentication/authentication.router"
 import cors from "cors";
+import analyticsRoutes from "./components/analytics/analytics.router"
 
 const initializeApp = () => {
     const app = express();
@@ -28,6 +29,7 @@ const initializeApp = () => {
     app.use("/api", orderRoutes);
     app.use("/api", customerSupportRoutes);
     app.use("/api", paymentRoutes);
+    app.use("/api", analyticsRoutes)
 
     return app;
 }

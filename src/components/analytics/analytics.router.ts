@@ -1,8 +1,8 @@
-import express from "express";
+import { Router } from "express";
 import { AnalyticsController } from "./analytics.controller";
 import {asyncHandler} from "../utils/asyncHandler";
 
-const router = express.Router();
+const router = Router();
 const controller = new AnalyticsController();
 
 router.get("/admin/summary", asyncHandler(controller.adminDashboard));
