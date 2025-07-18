@@ -6,10 +6,10 @@ const BASE_URL = 'http://localhost:8081';
 export const options = {
     stages: [
         { duration: '10s', target: 10 },   // ramp-up to 10 users
-        // { duration: '10s', target: 200 },  // sudden spike to 200 users
-        // { duration: '20s', target: 300 },  // stay at 300 users
-        // { duration: '10s', target: 10 },   // quick ramp-down to 10 users
-        // { duration: '10s', target: 0 },    // ramp-down to 0 users
+        { duration: '10s', target: 200 },  // sudden spike to 200 users
+        { duration: '20s', target: 300 },  // stay at 300 users
+        { duration: '10s', target: 10 },   // quick ramp-down to 10 users
+        { duration: '10s', target: 0 },    // ramp-down to 0 users
     ],
     ext: {
         loadimpact: {
@@ -19,7 +19,7 @@ export const options = {
 };
 
 export default function () {
-    const res = http.get(`${BASE_URL}/api/events`, {
+    const res = http.get(`${BASE_URL}/api/tickets/6`, {
         headers: {
             'Content-Type': 'application/json',
             // 'Authorization': `Bearer YOUR_VALID_TOKEN`,
@@ -28,15 +28,20 @@ export default function () {
 
     check(res, {
         'status is 200': (r) => r.status === 200,
-        'response is an array (even if empty)': (r) => {
+        'response is an object with expected keys': (r) => {
             try {
                 const body = JSON.parse(r.body as string);
-                return Array.isArray(body);
+                return body && typeof body === 'object' &&
+                    'ticket' in body &&
+                    'event' in body &&
+                    'ticketType' in body &&
+                    'venue' in body;
             } catch {
                 return false;
             }
         },
     });
+
 
     sleep(1);
 }

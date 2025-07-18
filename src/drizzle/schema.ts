@@ -145,7 +145,7 @@ export const Tickets = pgTable('tickets', {
     id: serial('id').primaryKey(),
     orderItemId: bigint('order_item_id', { mode: 'number' }),
     userId: integer('user_id').notNull().references(() => User.id),
-    eventId: integer('event_id').notNull().references(() => Venue.id),
+    eventId: integer('event_id').notNull().references(() => Events.id),
     ticketTypeId: integer('ticket_type_id').references(() => TicketTypes.id),
     uniqueCode: varchar('unique_code').notNull(),
     isScanned: boolean('is_scanned').default(false).notNull(),

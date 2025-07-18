@@ -6,10 +6,10 @@ const BASE_URL = 'http://localhost:8081';
 export const options = {
     stages: [
         { duration: '10s', target: 10 },   // ramp-up to 10 users
-        // { duration: '10s', target: 200 },  // sudden spike to 200 users
-        // { duration: '20s', target: 300 },  // stay at 300 users
-        // { duration: '10s', target: 10 },   // quick ramp-down to 10 users
-        // { duration: '10s', target: 0 },    // ramp-down to 0 users
+        { duration: '10s', target: 200 },  // sudden spike to 200 users
+        { duration: '20s', target: 300 },  // stay at 300 users
+        { duration: '10s', target: 10 },   // quick ramp-down to 10 users
+        { duration: '10s', target: 0 },    // ramp-down to 0 users
     ],
     ext: {
         loadimpact: {
@@ -19,7 +19,7 @@ export const options = {
 };
 
 export default function () {
-    const res = http.get(`${BASE_URL}/api/events`, {
+    const res = http.get(`${BASE_URL}/api/venues`, {
         headers: {
             'Content-Type': 'application/json',
             // 'Authorization': `Bearer YOUR_VALID_TOKEN`,
