@@ -11,38 +11,31 @@ export const options = {
     ],
     ext: {
         loadimpact: {
-            name: 'Events GET Load Test',
+            name: 'TIckets GET BY ID Load Test',
         },
     },
 };
 
 export default function () {
     // const token = 'YOUR_VALID_TOKEN';
-    const res = http.get(`${BASE_URL}/api/events`, {
+    const res = http.get(`${BASE_URL}/api/tickets/6`, {
         headers: {
             'Content-Type': 'application/json',
             // 'Authorization': `Bearer ${token}`,
         },
     });
 
+    console.log(res);
     check(res, {
         'status is 200': (r) => r.status === 200,
-        'response is an array (even if empty)': (r) => {
+        'response is an object with expected keys': (r) => {
             try {
                 const body = JSON.parse(r.body as string);
-                return Array.isArray(body);
-            } catch {
-                return false;
-            }
-        },
-    });
-
-    check(res, {
-        'status is 200': (r) => r.status === 200,
-        'response is an array (even if empty)': (r) => {
-            try {
-                const body = JSON.parse(r.body as string);
-                return Array.isArray(body);
+                return body && typeof body === 'object' &&
+                    'ticket' in body &&
+                    'event' in body &&
+                    'ticketType' in body &&
+                    'venue' in body;
             } catch {
                 return false;
             }

@@ -18,22 +18,10 @@ export const options = {
 
 export default function () {
     // const token = 'YOUR_VALID_TOKEN';
-    const res = http.get(`${BASE_URL}/api/events`, {
+    const res = http.get(`${BASE_URL}/venues`, {
         headers: {
             'Content-Type': 'application/json',
             // 'Authorization': `Bearer ${token}`,
-        },
-    });
-
-    check(res, {
-        'status is 200': (r) => r.status === 200,
-        'response is an array (even if empty)': (r) => {
-            try {
-                const body = JSON.parse(r.body as string);
-                return Array.isArray(body);
-            } catch {
-                return false;
-            }
         },
     });
 
