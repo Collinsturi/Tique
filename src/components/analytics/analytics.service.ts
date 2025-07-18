@@ -75,18 +75,25 @@ export class AnalyticsService {
             .limit(10);
 
         // Monthly Sales (tickets count per month)
-        const monthlySales = await db.execute(
+        const monthlySalesRaw = await db.execute(
             sql`
-                  SELECT 
-                    DATE_TRUNC('month', tickets.created_at) AS month,
-                    COUNT(*) as ticket_count
-                  FROM tickets
-                  JOIN events ON tickets.event_id = events.id
-                  WHERE events.organizer_id = ${admin.id}
-                  GROUP BY month
-                  ORDER BY month DESC
+                SELECT
+                    DATE_TRUNC('month', t."createdAt") AS month,
+      COUNT(*)::int AS ticket_count
+                FROM "tickets" t
+                    JOIN "Events" e ON t.event_id = e.id
+                WHERE e.organizer_id = ${admin.id}
+                GROUP BY month
+                ORDER BY month DESC
             `
         );
+
+
+        const monthlySales = (monthlySalesRaw as any).rows as {
+            month: string;
+            ticket_count: number;
+        }[];
+
 
         // Ticket Type Distribution for Latest Event
         const latestEvent = await db
