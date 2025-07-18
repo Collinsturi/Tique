@@ -151,6 +151,7 @@ export const Tickets = pgTable('tickets', {
     isScanned: boolean('is_scanned').default(false).notNull(),
     scannedAt: timestamp('scanned_at'),
     scannedByUser: integer('scanned_by_user').references(() => User.id),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
 });
 
 export const StaffAssignments = pgTable('staff_assignments', {
