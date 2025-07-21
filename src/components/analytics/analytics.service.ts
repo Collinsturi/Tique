@@ -79,13 +79,13 @@ export class AnalyticsService {
             sql`
                 SELECT
                     DATE_TRUNC('month', t."createdAt") AS month,
-      COUNT(*)::int AS ticket_count
-                FROM "tickets" t
-                    JOIN "Events" e ON t.event_id = e.id
-                WHERE e.organizer_id = ${admin.id}
-                GROUP BY month
-                ORDER BY month DESC
-            `
+              COUNT(*)::int AS ticket_count
+                        FROM "tickets" t
+                            JOIN "Events" e ON t.event_id = e.id
+                        WHERE e.organizer_id = ${admin.id}
+                        GROUP BY month
+                        ORDER BY month DESC
+                `
         );
 
 

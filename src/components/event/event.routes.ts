@@ -11,7 +11,7 @@ router.put("/events/:id", asyncHandler(eventController.update));
 router.delete("/events/:id", asyncHandler(eventController.delete));
 
 router.get("/events/staff/assigned/:email", asyncHandler(eventController.getStaffAssignedEvents));
-router.get("/events/staff/scanned/:email", asyncHandler(eventController.getStaffScannedTickets));
+router.get("/events/organizer/:email/assigned-staff", asyncHandler(eventController.getOrganizerAssignedStaff));
 
 //Get organizer upcoming events
 router.get("/events/organizer/:email/upcoming", asyncHandler(eventController.getUpcomingEvents));
@@ -20,6 +20,7 @@ router.get("/events/organizer/:email/upcoming", asyncHandler(eventController.get
 router.get("/events/staff/available", asyncHandler(eventController.getAvailableStaff));
 //Assign events staff for events
 router.post("/events/organizer/:email/assignStaff", asyncHandler(eventController.assignStaff));
+router.delete("/events/organizer/:email/unassign-staff", asyncHandler(eventController.unassignStaff));
 
 // Get current events for organizer
 router.get("/events/organizer/current/:email", asyncHandler(eventController.getCurrentOrganizerEvents));

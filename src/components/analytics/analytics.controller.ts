@@ -6,7 +6,8 @@ const service = new AnalyticsService();
 export class AnalyticsController {
     async adminDashboard(req: Request, res: Response) {
         try {
-            const adminEmail = req.user?.email; // assuming user info is in req.user
+            const adminEmail = req.params.email;
+            console.log(adminEmail);
             if (!adminEmail) return res.status(401).json({ error: "Unauthorized" });
 
             const result = await service.AdminDashboardAnalytics(adminEmail);
@@ -94,7 +95,7 @@ export class AnalyticsController {
 
     async getOrganizerEarningsSummary(req: Request, res: Response) {
         try {
-            const userId = req.user?.id;
+            const userId = req.params.email;
             if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
             const result = await service.getOrganizerEarningsSummary(Number(userId));

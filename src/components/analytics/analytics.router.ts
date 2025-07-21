@@ -5,7 +5,7 @@ import {asyncHandler} from "../utils/asyncHandler";
 const router = Router();
 const controller = new AnalyticsController();
 
-router.get("/admin/summary", asyncHandler(controller.adminDashboard));
+router.get("/admin/summary/:email", asyncHandler(controller.adminDashboard));
 router.get("/platform/summary", asyncHandler(controller.getPlatformSummary));
 router.get("/platform/monthly-trends", asyncHandler(controller.getMonthlySalesTrends));
 router.get("/platform/top-events", asyncHandler(controller.getTopSellingEvents));
@@ -16,7 +16,7 @@ router.get("/event/:eventId/scan-log", asyncHandler(controller.getEventScanLog))
 router.get("/event/:eventId/scan-status", asyncHandler(controller.getEventScanStatus));
 router.get("/event/:eventId/ticket-distribution", asyncHandler(controller.getTicketTypeDistribution));
 
-router.get("/organizer/wallet", asyncHandler(controller.getOrganizerEarningsSummary));
+router.get("/organizer/wallet/:email", asyncHandler(controller.getOrganizerEarningsSummary));
 router.get("/organizer/revenue", asyncHandler(controller.getRevenuePerEvent));
 
 export default router;

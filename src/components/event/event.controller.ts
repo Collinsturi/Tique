@@ -98,7 +98,6 @@ export class EventController {
          }
     }
 
-    avail
     assignStaff = async (req: Request, res: Response) => {
         try {
             const email: string = req.params.email;
@@ -113,7 +112,7 @@ export class EventController {
                 return res.status(400).json({ message: "Invalid event ID." });
             }
 
-            await eventService.assignStaff(email, eventId, staffEmails);
+            await eventService.assignStaff(email, staffEmails, eventId);
 
             return res.status(200).json({ message: "Staff assigned successfully." });
 
@@ -158,6 +157,40 @@ export class EventController {
 
         }
     }
+
+     unassignStaff = async (req: Request, res: Response) => {
+        const { email: organizerEmail } = req.params; // Organizer email from URL
+        const { staffEmails, eventId } = req.body; // Expecting staffEmails (array) and eventId in body
+
+        if (!staffEmails || !Array.isArray(staffEmails) || staffEmails.length === 0 || !eventId) {
+            return res.status(400).json({ message: 'Invalid request body: staffEmails (array) and eventId are required.' });
+        }
+
+        try {
+            await eventService.unassignStaffFromEvent(eventId, staffEmails, organizerEmail);
+            res.status(200).json({ message: 'Staff successfully unassigned from event.' });
+        } catch (error: any) {
+            console.error(`Error unassigning staff: ${error.message}`);
+            res.status(500).json({ message: error.message || 'Failed to unassign staff.' });
+        }
+    };
+
+     getOrganizerAssignedStaff = async (req: Request, res: Response) => {
+        const { email: organizerEmail } = req.params; // Organizer email from URL
+        const { eventId } = req.query; // Expecting eventId as a query parameter
+
+        if (!eventId) {
+            return res.status(400).json({ message: 'Event ID is required as a query parameter.' });
+        }
+
+        try {
+            const assignedStaff = await eventService.getAssignedStaffForEvent(parseInt(eventId as string), organizerEmail);
+            res.status(200).json(assignedStaff);
+        } catch (error: any) {
+            console.error(`Error fetching assigned staff: ${error.message}`);
+            res.status(500).json({ message: error.message || 'Failed to fetch assigned staff.' });
+        }
+    };
 }
 
 export const eventController = new EventController();
