@@ -5,11 +5,11 @@ import jwt from "jsonwebtoken";
 import "dotenv/config";
 import { sendEmail } from "../../communication/mailer";
 import { type UserInsert } from "../../drizzle/schema";
+import passport from "passport"; // Import passport
 
 // Create user controller
 export const createUserController = async (req: Request, res: Response) => {
     try {
-        console.log('HIT REGISTER CONTROLLER');
         const user: UserInsert = req.body;
         user.password = await bcrypt.hash(user.password, 10);
 
@@ -135,6 +135,52 @@ export const loginUserController = async (req: Request, res: Response) => {
         return res.status(500).json({ error: error.message });
     }
 };
+
+// Controller to initiate Google OAuth (handled by Passport middleware)
+export const googleAuthRedirectController = (req: Request, res: Response) => {
+    // This function will typically not be reached directly as Passport handles the redirect.
+    // It's here for completeness if you need to do something before Passport redirects.
+};
+
+// Controller for Google OAuth callback
+export const googleAuthCallbackController = async (req: Request, res: Response) => {
+    try {
+        // Passport attaches the user to req.user after successful authentication
+        const user = req.user as UserInsert;
+
+        if (!user) {
+            // Redirect to the auth page with an error if authentication fails
+            return res.redirect(`${process.env.FRONTEND_URL}/auth?error=google_auth_failed`);
+        }
+
+        // Generate a JWT token for the authenticated user
+        const payload = {
+            sub: user.id,
+            user_id: user.id,
+            first_name: user.firstName,
+            last_name: user.lastName,
+            role: user.role,
+            exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 // Token expires in 24 hours
+        };
+
+        const secret = process.env.JWT_SECRET as string;
+        if (!secret) {
+            throw new Error("JWT_SECRET is not defined in environment variables.");
+        }
+
+        const token = jwt.sign(payload, secret);
+
+        // Redirect to your frontend's /auth page with the token and user data
+        // The frontend's Auth component useEffect will then handle these parameters
+        res.redirect(`${process.env.FRONTEND_URL}/auth?token=${token}&userId=${user.id}&firstName=${user.firstName}&lastName=${user.lastName}&email=${user.email}&role=${user.role}`);
+
+    } catch (error: any) {
+        console.error("Google OAuth callback error:", error);
+        // Redirect to the auth page with an error if an unexpected error occurs
+        res.redirect(`${process.env.FRONTEND_URL}/auth?error=google_auth_failed`);
+    }
+};
+
 
 export const getUserByIdController = async (req: Request, res: Response) => {
     try {

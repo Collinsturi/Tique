@@ -1,5 +1,5 @@
 {
-  "id": "79e12aee-f80f-401e-b58d-221a2328ba60",
+  "id": "fbf02da1-9556-488f-94a6-68104a06da37",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -136,6 +136,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "organizer_id": {
+          "name": "organizer_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
@@ -146,6 +152,19 @@
           "tableTo": "Venue",
           "columnsFrom": [
             "Venue_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "Events_organizer_id_User_id_fk": {
+          "name": "Events_organizer_id_User_id_fk",
+          "tableFrom": "Events",
+          "tableTo": "User",
+          "columnsFrom": [
+            "organizer_id"
           ],
           "columnsTo": [
             "id"
@@ -384,6 +403,142 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.staff_assignments": {
+      "name": "staff_assignments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_id": {
+          "name": "event_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "staff_assignments_user_id_User_id_fk": {
+          "name": "staff_assignments_user_id_User_id_fk",
+          "tableFrom": "staff_assignments",
+          "tableTo": "User",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "staff_assignments_event_id_Events_id_fk": {
+          "name": "staff_assignments_event_id_Events_id_fk",
+          "tableFrom": "staff_assignments",
+          "tableTo": "Events",
+          "columnsFrom": [
+            "event_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ticket_logs": {
+      "name": "ticket_logs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "ticket_id": {
+          "name": "ticket_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_valid": {
+          "name": "is_valid",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "reasonForOverride": {
+          "name": "reasonForOverride",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "overridden_by_user_id": {
+          "name": "overridden_by_user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "ticket_logs_ticket_id_tickets_id_fk": {
+          "name": "ticket_logs_ticket_id_tickets_id_fk",
+          "tableFrom": "ticket_logs",
+          "tableTo": "tickets",
+          "columnsFrom": [
+            "ticket_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "ticket_logs_overridden_by_user_id_User_id_fk": {
+          "name": "ticket_logs_overridden_by_user_id_User_id_fk",
+          "tableFrom": "ticket_logs",
+          "tableTo": "User",
+          "columnsFrom": [
+            "overridden_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.ticket_types": {
       "name": "ticket_types",
       "schema": "",
@@ -421,6 +576,12 @@
         "quantity_sold": {
           "name": "quantity_sold",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar",
           "primaryKey": false,
           "notNull": false
         }
@@ -505,6 +666,13 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
@@ -522,10 +690,10 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "tickets_event_id_Venue_id_fk": {
-          "name": "tickets_event_id_Venue_id_fk",
+        "tickets_event_id_Events_id_fk": {
+          "name": "tickets_event_id_Events_id_fk",
           "tableFrom": "tickets",
-          "tableTo": "Venue",
+          "tableTo": "Events",
           "columnsFrom": [
             "event_id"
           ],
@@ -606,7 +774,7 @@
           "name": "contactPhone",
           "type": "varchar",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "address": {
           "name": "address",
@@ -620,7 +788,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'customer'"
+          "default": "'event_attendee'"
         },
         "verificationCode": {
           "name": "verificationCode",
@@ -648,6 +816,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "google_id": {
+          "name": "google_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -690,6 +864,13 @@
           "nullsNotDistinct": false,
           "columns": [
             "email"
+          ]
+        },
+        "User_google_id_unique": {
+          "name": "User_google_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "google_id"
           ]
         }
       },
@@ -781,8 +962,9 @@
       "schema": "public",
       "values": [
         "admin",
-        "customer",
-        "check_in_staff"
+        "event_attendee",
+        "check_in_staff",
+        "organizer"
       ]
     }
   },

@@ -15,7 +15,7 @@ import {
 // ========================
 // User Roles Enum
 // ========================
-export const userRoles = ['admin', 'customer', 'check_in_staff', `organizer`] as const;
+export const userRoles = ['admin', 'event_attendee', 'check_in_staff', `organizer`] as const;
 export const userRoleEnum = pgEnum('user_role', userRoles);
 export type UserRole = typeof userRoles[number];
 
@@ -48,13 +48,14 @@ export const User = pgTable('User', {
     lastName: varchar('lastName').notNull(),
     email: varchar('email').notNull().unique(),
     password: varchar('password').notNull(),
-    contactPhone: varchar('contactPhone').notNull(),
+    contactPhone: varchar('contactPhone'),
     address: varchar('address'),
-    role: userRoleEnum('role').default('customer').notNull(),
+    role: userRoleEnum('role').default('event_attendee').notNull(),
     verificationCode: integer('verificationCode').notNull(),
     isVerified: boolean('isVerified').default(false).notNull(),
     createdAt: timestamp('createdAt').defaultNow().notNull(),
     updateAt: timestamp('updateAt').defaultNow().notNull(),
+    googleId: text("google_id").unique(),
 }, (table) => ({
     emailIndex: index('User_email_index').on(table.email),
     roleIndex: index('User_role_index').on(table.role),
@@ -116,6 +117,7 @@ export const TicketTypes = pgTable('ticket_types', {
     price: bigint('price', { mode: 'number' }),
     quantityAvailable: integer('quantity_available'),
     quantitySold: integer('quantity_sold'),
+    description: varchar('description'),
 });
 
 // Orders Table

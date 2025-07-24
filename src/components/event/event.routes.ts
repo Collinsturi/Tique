@@ -6,7 +6,7 @@ const router = Router();
 
 router.get("/events", asyncHandler(eventController.getAll));
 router.get("/events/:id", asyncHandler(eventController.getById));
-router.post("/events", asyncHandler(eventController.create));
+router.post("/events/:email", asyncHandler(eventController.createEvent));
 router.put("/events/:id", asyncHandler(eventController.update));
 router.delete("/events/:id", asyncHandler(eventController.delete));
 

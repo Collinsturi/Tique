@@ -17,6 +17,6 @@ router.get("/event/:eventId/scan-status", asyncHandler(controller.getEventScanSt
 router.get("/event/:eventId/ticket-distribution", asyncHandler(controller.getTicketTypeDistribution));
 
 router.get("/organizer/wallet/:email", asyncHandler(controller.getOrganizerEarningsSummary));
-router.get("/organizer/revenue", asyncHandler(controller.getRevenuePerEvent));
+router.get("/organizer/revenue/:email", asyncHandler(controller.getRevenuePerEvent));
 
 export default router;

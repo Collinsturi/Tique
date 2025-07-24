@@ -107,10 +107,10 @@ export class AnalyticsController {
 
     async getRevenuePerEvent(req: Request, res: Response) {
         try {
-            const userId = req.user?.id;
-            if (!userId) return res.status(401).json({ error: "Unauthorized" });
+            const userEmail = req.params.email;
+            if (!userEmail) return res.status(401).json({ error: "Unauthorized" });
 
-            const result = await service.getRevenuePerEvent(Number(userId));
+            const result = await service.getRevenuePerEvent(userEmail);
             res.json(result);
         } catch (err) {
             res.status(500).json({ error: err.message });

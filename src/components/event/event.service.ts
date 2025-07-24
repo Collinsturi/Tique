@@ -12,6 +12,29 @@ import {
 import {eq, and, sql, lte, gte, lt, inArray} from "drizzle-orm";
 import { addDays, startOfToday } from 'date-fns';
 
+export type CreateEventServicePayload = {
+    category: string;
+    name: string;
+    description: string;
+    startDate: string;
+    endDate: string;
+    address: string;
+    city: string;
+    country: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    posterImageUrl?: string;
+    thumbnailImageUrl?: string;
+    organizerEmail: string;
+    venueId?: number;
+    ticketTypes: {
+        name: string;
+        price: number;
+        quantityAvailable: number;
+        description?: string;
+    }[];
+};
+
 export class EventService {
     // Fetch all events with optional filters - improved data structure
     async getAllEvents(filters: { venueId?: number; category?: string; date?: string }) {
@@ -144,12 +167,90 @@ export class EventService {
         };
     }
 
-    // Create a new event
-    async createEvent(eventData: EventInsert) {
-        const result = await db.insert(Events).values(eventData).returning();
-        return result[0];
-    }
 
+    // Create a new event
+     async createEvent(eventPayload: CreateEventServicePayload) {
+        // 1. Find Organizer
+        const [organizer] = await db
+            .select()
+            .from(User)
+            .where(eq(User.email, eventPayload.organizerEmail))
+            .execute();
+
+        if (!organizer) {
+            throw new Error('Organizer not found.');
+        }
+
+        const organizerId = organizer.id;
+
+        // 2. Handle Venue: use provided `venueId` or create new
+        let venueId: number;
+
+        if (eventPayload.venueId) {
+            const [existingVenue] = await db
+                .select()
+                .from(Venue)
+                .where(eq(Venue.id, eventPayload.venueId))
+                .execute();
+
+            if (!existingVenue) {
+                throw new Error('Provided venueId does not exist.');
+            }
+
+            venueId = existingVenue.id;
+        } else {
+            const venueInsertData = {
+                name: `${eventPayload.name} Venue`,
+                addresses: `${eventPayload.address}, ${eventPayload.city}, ${eventPayload.country}`,
+                capacity: eventPayload.ticketTypes.reduce((sum, tt) => sum + tt.quantityAvailable, 0),
+            };
+
+            const [newVenue] = await db.insert(Venue).values(venueInsertData).returning().execute();
+
+            if (!newVenue) {
+                throw new Error('Failed to create venue.');
+            }
+
+            venueId = newVenue.id;
+        }
+
+        // 3. Insert Event
+        const eventInsertData = {
+            title: eventPayload.name,
+            Description: eventPayload.description,
+            VenueId: venueId,
+            Category: eventPayload.category,
+            eventDate: eventPayload.startDate.split('T')[0], // 'YYYY-MM-DD'
+            eventTime: eventPayload.startDate.split('T')[1]?.split('.')[0] ?? '00:00:00', // 'HH:mm:ss'
+            organizerId,
+        };
+
+        const [newEvent] = await db.insert(Events).values(eventInsertData).returning().execute();
+
+        if (!newEvent) {
+            throw new Error('Failed to create event.');
+        }
+
+        // 4. Insert Ticket Types
+        const ticketTypeInserts = eventPayload.ticketTypes.map((tt) => ({
+            eventId: newEvent.id,
+            typeName: tt.name,
+            price: tt.price,
+            quantityAvailable: tt.quantityAvailable,
+            quantitySold: 0,
+            description: tt.description ?? null,
+        }));
+
+        if (ticketTypeInserts.length > 0) {
+            await db.insert(TicketTypes).values(ticketTypeInserts).execute();
+        }
+
+        return {
+            success: true,
+            message: 'Event created successfully!',
+            eventId: newEvent.id,
+        };
+    }
     // Update an event
     async updateEvent(id: number, eventData: Partial<EventInsert>) {
         const result = await db.update(Events).set(eventData).where(eq(Events.id, id)).returning();

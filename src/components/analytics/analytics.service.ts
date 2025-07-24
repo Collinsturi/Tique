@@ -245,12 +245,16 @@ export class AnalyticsService {
         const results = await db
             .select({
                 ticketType: TicketTypes.typeName,
-                countSold: sql<number>`COUNT(*)`.as('countSold'),
-                revenue: sql<number>`COUNT(*) * ${TicketTypes.price}`.as('revenue')
+                price: TicketTypes.price,
+                countSold: sql<number>`COUNT(${Tickets.id})`.as('countSold'),
+                revenue: sql<number>`COALESCE(COUNT(${Tickets.id}) * ${TicketTypes.price}, 0)`.as('revenue'),
             })
-            .from(Tickets)
-            .innerJoin(TicketTypes, eq(Tickets.ticketTypeId, TicketTypes.id))
-            .where(eq(Tickets.eventId, eventId))
+            .from(TicketTypes)
+            .leftJoin(Tickets, and(
+                eq(TicketTypes.id, Tickets.ticketTypeId),
+                eq(Tickets.eventId, eventId)
+            ))
+            .where(eq(TicketTypes.eventId, eventId))
             .groupBy(TicketTypes.typeName, TicketTypes.price);
 
         return results;
@@ -318,7 +322,15 @@ export class AnalyticsService {
     }
 
     // 11. Revenue per Event
-    async getRevenuePerEvent(userId: number) {
+    async getRevenuePerEvent(organizerEmail: string) {
+        // Step 1: Get organizer's user ID
+        const organizer = await db.query.User.findFirst({
+            where: eq(User.email, organizerEmail),
+            columns: { id: true }
+        });
+
+        if (!organizer) throw new Error("Organizer not found");
+
         const result = await db
             .select({
                 eventName: Events.title,
@@ -330,7 +342,7 @@ export class AnalyticsService {
             .innerJoin(OrderItems, eq(Tickets.orderItemId, OrderItems.id))
             .innerJoin(Orders, eq(OrderItems.orderId, Orders.id))
             .innerJoin(Payment, eq(Orders.id, Payment.orderId))
-            .where(eq(Events.organizerId, userId))
+            .where(eq(Events.organizerId, organizer.id))
             .groupBy(Events.id, Events.title);
 
         return result;

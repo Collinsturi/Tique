@@ -1,10 +1,22 @@
 import { eq, sql } from "drizzle-orm";
 import db from "../../drizzle/db";
+// Corrected import: Directly import 'User' (capital U) as it's exported from schema.
 import { type UserInsert, User, UserRole } from "../../drizzle/schema";
 
 export class UserService {
     static async createUser(user: UserInsert) {
         try {
+            // If it's a social login (has googleId but no password), set password to empty string
+            // and mark as verified.
+            if (user.googleId && !user.password) {
+                user.password = ''; // Or a specific placeholder for social logins
+                user.isVerified = true;
+                user.verificationCode = 0; // Clear verification code for social logins
+            } else if (!user.googleId && !user.password) {
+                // Handle cases where a password is expected but missing for non-social logins
+                throw new Error("Password is required for non-social registrations.");
+            }
+
             const result = await db.insert(User).values(user).returning();
             return result[0];
         } catch (error) {
@@ -21,6 +33,18 @@ export class UserService {
         } catch (error) {
             console.error("Error fetching user by email:", error);
             throw new Error("Failed to fetch user by email.");
+        }
+    }
+
+    // New method to find a user by their Google ID
+    static async findUserByGoogleId(googleId: string) {
+        try {
+            return await db.query.User.findFirst({
+                where: eq(User.googleId, googleId) // This should now correctly reference the 'googleId' column
+            });
+        } catch (error) {
+            console.error("Error fetching user by Google ID:", error);
+            throw new Error("Failed to fetch user by Google ID.");
         }
     }
 

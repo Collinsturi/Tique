@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { eventService } from "./event.service";
+import {type CreateEventServicePayload, eventService} from "./event.service";
 
 export class EventController {
      getAll = async (req: Request, res: Response) => {
@@ -28,14 +28,52 @@ export class EventController {
         }
     }
 
-    create = async (req: Request, res: Response) => {
-        try {
-            const newEvent = await eventService.createEvent(req.body);
-            res.status(201).json(newEvent);
-        } catch (error) {
-            res.status(500).json({ message: "Failed to create event", error });
-        }
-    }
+    createEvent = async  (req: Request, res: Response) => {
+        // if (!req.user || !req.user.email) {
+        //     // This check assumes `protect` middleware runs before this controller
+        //     return res.status(401).json({ message: "Unauthorized: Organizer information missing or invalid." });
+        // }
+        const organizerEmail = req.params.email; // Safely get the organizer's email
+
+        // The raw request body from the client (frontend)
+        const rawEventData = req.body;
+
+
+        const eventPayload: CreateEventServicePayload = {
+            category: rawEventData.category,
+            name: rawEventData.name,
+            description: rawEventData.description,
+            startDate: rawEventData.startDate,
+            endDate: rawEventData.endDate,
+            address: rawEventData.address,
+            city: rawEventData.city,
+            country: rawEventData.country,
+            // Latitude and Longitude are currently ignored by the service based on your Venue schema
+            // but can be included here if you intend to add them to your Venue schema later.
+            latitude: rawEventData.latitude ? parseFloat(rawEventData.latitude) : null,
+            longitude: rawEventData.longitude ? parseFloat(rawEventData.longitude) : null,
+            // posterImageUrl and thumbnailImageUrl are currently ignored by the service based on your Events schema
+            posterImageUrl: rawEventData.posterImageUrl || undefined, // Use undefined to omit if empty string
+            thumbnailImageUrl: rawEventData.thumbnailImageUrl || undefined, // Use undefined to omit if empty string
+            organizerEmail: organizerEmail, // The securely obtained organizer email
+            ticketTypes: rawEventData.ticketTypes.map((tt: any) => ({
+                name: tt.name,
+                price: parseFloat(tt.price), // Ensure price is a number
+                quantityAvailable: parseInt(tt.quantityAvailable), // Ensure quantity is an integer
+                minPerOrder: parseInt(tt.minPerOrder),
+                maxPerOrder: parseInt(tt.maxPerOrder),
+                salesStartDate: tt.salesStartDate,
+                salesEndDate: tt.salesEndDate,
+                description: tt.description || undefined,
+            })),
+        };
+
+        // Call the service function to handle the business logic and database operations
+        const result = await eventService.createEvent(eventPayload);
+
+        // Send a success response
+        res.status(201).json(result); // 201 Created status
+    };
 
     update = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
