@@ -1,101 +1,236 @@
 import db from "../../drizzle/db";
-import { Orders, OrderInsert, OrderItems, OrderItemInsert } from "../../drizzle/schema";
+import { Orders, OrderInsert, OrderItems, OrderItemInsert, TicketTypes, Tickets } from "../../drizzle/schema";
 import { eq, sql } from "drizzle-orm";
+import { v4 as uuidv4 } from 'uuid'; // For generating unique ticket codes
 
 export class OrderService {
+    /**
+     * Fetches all orders from the database.
+     * @returns A promise that resolves to an array of orders.
+     */
     async getAllOrders() {
         try {
             return await db.select().from(Orders);
         } catch (error) {
-            console.error("Error fetching orders:", error);
-            throw new Error("Failed to fetch orders");
+            console.error("Error fetching all orders:", error);
+            throw new Error("Failed to fetch all orders");
         }
     }
 
+    /**
+     * Fetches a single order by its ID, including its associated order items.
+     * @param id The ID of the order to fetch.
+     * @returns A promise that resolves to an object containing the order and its items, or null if not found.
+     */
     async getOrderById(id: number) {
-        if (isNaN(id)) throw new Error("Invalid order ID");
+        if (isNaN(id)) throw new Error("Invalid order ID provided.");
 
         try {
-            const order = await db.select().from(Orders).where(eq(Orders.id, id));
-            if (order.length === 0) return null;
+            // Fetch the order
+            const [order] = await db.select().from(Orders).where(eq(Orders.id, id));
 
+            if (!order) return null;
+
+            // Fetch associated order items
             const items = await db.select().from(OrderItems).where(eq(OrderItems.orderId, id));
-            return { order: order[0], items };
+
+            // Fetch associated tickets for this order
+            const tickets = await db.select().from(Tickets).where(eq(Tickets.orderItemId, sql`ANY(SELECT id FROM ${OrderItems} WHERE ${OrderItems.orderId} = ${id})`));
+
+
+            return { order, items, tickets };
         } catch (error) {
             console.error(`Error fetching order with ID ${id}:`, error);
-            throw new Error("Failed to fetch order");
+            throw new Error("Failed to fetch order details");
         }
     }
 
-    async createOrder(orderData: OrderInsert, orderItems: OrderItemInsert[]) {
-        if (!orderData || !orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
-            throw new Error("Order and order items are required");
+    /**
+     * Creates a new order, processes order items, updates ticket quantities, and generates individual tickets.
+     * This operation is wrapped in a transaction to ensure atomicity.
+     * @param userId The ID of the user creating the order.
+     * @param orderItemsData An array of order item data (ticketTypeId, quantity).
+     * @returns A promise that resolves to the newly created order with its items and generated tickets.
+     */
+    async createOrder(userId: number, orderItemsData: Omit<OrderItemInsert, 'orderId' | 'unitPrice' | 'subtotal'>[]) {
+        if (!userId || !orderItemsData || !Array.isArray(orderItemsData) || orderItemsData.length === 0) {
+            throw new Error("User ID and order items are required to create an order.");
         }
 
-        try {
-            // Create the order first
-            const [newOrder] = await db.insert(Orders).values(orderData).returning();
+        let totalOrderAmount: number = 0;
+        const ticketsToGenerate: Omit<TicketInsert, 'orderItemId'>[] = [];
+        const processedOrderItems: Omit<OrderItemInsert, 'orderId'>[] = [];
 
-            // Prepare order items with the correct orderId
-            const itemsWithOrderId = orderItems.map(item => ({
+        // Use a transaction for atomicity: all or nothing
+        const result = await db.transaction(async (tx) => {
+            // 1. Validate ticket types, calculate subtotals, and prepare quantity updates
+            for (const item of orderItemsData) {
+                if (!item.ticketTypeId || !item.quantity || item.quantity <= 0) {
+                    throw new Error("Each order item must have a valid ticketTypeId and a positive quantity.");
+                }
+
+                // Fetch ticket type details to get price and current availability
+                const [ticketType] = await tx.select().from(TicketTypes).where(eq(TicketTypes.id, item.ticketTypeId));
+
+                if (!ticketType) {
+                    throw new Error(`Ticket type with ID ${item.ticketTypeId} not found.`);
+                }
+
+                // Check if enough tickets are available
+                if (ticketType.quantityAvailable === null || ticketType.quantityAvailable < item.quantity) {
+                    throw new Error(`Not enough tickets available for type '${ticketType.typeName}'. Available: ${ticketType.quantityAvailable || 0}, Requested: ${item.quantity}`);
+                }
+
+                const unitPrice = ticketType.price || 0;
+                const subtotal = item.quantity * unitPrice;
+                totalOrderAmount += subtotal;
+
+                // Store processed item data for later insertion into OrderItems
+                processedOrderItems.push({
+                    ticketTypeId: item.ticketTypeId,
+                    quantity: item.quantity,
+                    unitPrice: unitPrice,
+                    subtotal: subtotal,
+                });
+
+                // Prepare tickets to be generated after order items are inserted
+                for (let i = 0; i < item.quantity; i++) {
+                    ticketsToGenerate.push({
+                        userId: userId,
+                        eventId: ticketType.eventId!, // EventId is crucial for a ticket
+                        ticketTypeId: ticketType.id,
+                        uniqueCode: this.generateUniqueTicketCode(), // Generate a unique code for each ticket
+                        isScanned: false,
+                        // orderItemId will be set after OrderItems are inserted
+                    });
+                }
+
+                // Update ticket type quantities immediately within the transaction
+                await tx.update(TicketTypes)
+                    .set({
+                        quantityAvailable: sql`${TicketTypes.quantityAvailable} - ${item.quantity}`,
+                        quantitySold: sql`${TicketTypes.quantitySold} + ${item.quantity}`,
+                        updatedAt: new Date(), // Assuming TicketTypes has an updatedAt field
+                    })
+                    .where(eq(TicketTypes.id, item.ticketTypeId));
+            }
+
+            // 2. Create the main order entry
+            const [newOrder] = await tx.insert(Orders).values({
+                userId: userId,
+                totalAmount: totalOrderAmount,
+                status: 'pending_payment', // Initial status is pending payment
+                paymentMethod: 'mpesa', // Default, can be updated during payment
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            }).returning();
+
+            if (!newOrder) {
+                throw new Error("Failed to create the main order entry.");
+            }
+
+            // 3. Insert order items, linking them to the newly created order
+            const itemsToInsert = processedOrderItems.map(item => ({
                 ...item,
                 orderId: newOrder.id,
             }));
+            const insertedOrderItems = await tx.insert(OrderItems).values(itemsToInsert).returning();
 
-            // Insert order items
-            await db.insert(OrderItems).values(itemsWithOrderId);
+            // 4. Insert generated tickets, linking them to their specific order items
+            for (const ticket of ticketsToGenerate) {
+                // Find the corresponding order item to link the ticket
+                const correspondingOrderItem = insertedOrderItems.find(oi =>
+                    oi.ticketTypeId === ticket.ticketTypeId &&
+                    oi.orderId === newOrder.id
+                );
 
-            // Return the created order with items
+                if (correspondingOrderItem) {
+                    await tx.insert(Tickets).values({
+                        ...ticket,
+                        orderItemId: correspondingOrderItem.id,
+                        createdAt: new Date(),
+                    });
+                } else {
+                    // This scenario indicates a logic error if it occurs
+                    console.warn(`Could not find corresponding order item for ticket type ${ticket.ticketTypeId} during ticket generation.`);
+                    throw new Error("Internal error: Failed to link tickets to order items.");
+                }
+            }
+
+            // Return the complete order details (order, items, tickets)
             return await this.getOrderById(newOrder.id);
-        } catch (error) {
-            console.error("Error creating order:", error);
-            throw new Error("Failed to create order");
-        }
+        });
+
+        return result;
     }
 
+    /**
+     * Updates an existing order.
+     * @param id The ID of the order to update.
+     * @param updateData The partial data to update the order with.
+     * @returns A promise that resolves to the updated order, or null if the order was not found.
+     */
     async updateOrder(id: number, updateData: Partial<OrderInsert>) {
         if (!updateData || Object.keys(updateData).length === 0) {
-            console.error(`No fields provided for update on order ID ${id}`);
-            throw new Error("No fields provided for update");
+            console.warn(`No fields provided for update on order ID ${id}`);
+            throw new Error("No fields provided for update.");
         }
+        if (isNaN(id)) throw new Error("Invalid order ID provided for update.");
 
         try {
-            const result = await db.update(Orders)
-                .set(updateData)
+            const [result] = await db.update(Orders)
+                .set({ ...updateData, updatedAt: new Date() }) // Ensure updatedAt is updated
                 .where(eq(Orders.id, id))
                 .returning();
 
-            if (result.length === 0) {
-                console.error(`Order with ID ${id} not found for update`);
-                throw new Error(`Order with ID ${id} not found`);
-            }
-
-            return result[0];
+            return result || null; // Return the updated order or null if not found
         } catch (error: any) {
             console.error(`Error updating order with ID ${id}:`, error);
-            if (error.message.includes(`Order with ID ${id} not found`)) {
-                throw error; // Let specific error pass through
-            }
-            throw new Error("Failed to update order");
+            throw new Error("Failed to update order.");
         }
     }
 
-
+    /**
+     * Deletes an order and its associated order items.
+     * This operation is wrapped in a transaction to ensure atomicity.
+     * @param id The ID of the order to delete.
+     * @returns A promise that resolves to the deleted order, or null if not found.
+     */
     async deleteOrder(id: number) {
-        if (isNaN(id)) throw new Error("Invalid order ID");
+        if (isNaN(id)) throw new Error("Invalid order ID provided for deletion.");
 
         try {
-            const order = await db.select().from(Orders).where(eq(Orders.id, id));
-            if (order.length === 0) return null;
+            const [orderToDelete] = await db.select().from(Orders).where(eq(Orders.id, id));
+            if (!orderToDelete) return null; // Order not found
 
-            await db.delete(OrderItems).where(eq(OrderItems.orderId, id));
-            const result = await db.delete(Orders).where(eq(Orders.id, id)).returning();
+            // Use a transaction for atomic deletion
+            await db.transaction(async (tx) => {
+                // First, delete related tickets (if any, though orderItemId is nullable, it's good practice)
+                // This query needs to be more robust if tickets are directly linked to orders, not just order items
+                // For now, assuming tickets are linked via orderItemId which is deleted with order items.
+                // If tickets need to be explicitly deleted, add logic here.
 
-            return result[0];
+                // Delete order items associated with the order
+                await tx.delete(OrderItems).where(eq(OrderItems.orderId, id));
+
+                // Then, delete the order itself
+                await tx.delete(Orders).where(eq(Orders.id, id));
+            });
+
+            return orderToDelete; // Return the order that was deleted
         } catch (error: any) {
             console.error(`Error deleting order with ID ${id}:`, error);
-            throw new Error("Failed to delete order");
+            throw new Error("Failed to delete order.");
         }
+    }
+
+    /**
+     * Generates a unique code for a ticket.
+     * In a production environment, consider a more robust, collision-resistant unique ID generation strategy.
+     * @returns A unique string code.
+     */
+    private generateUniqueTicketCode(): string {
+        return uuidv4(); // Using uuid library for robust unique ID generation
     }
 }
 

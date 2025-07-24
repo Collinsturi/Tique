@@ -11,6 +11,7 @@ import {
     primaryKey,
     boolean, date, time
 } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 
 // ========================
 // User Roles Enum
@@ -29,16 +30,23 @@ export type SupportStatus = typeof supportStatuses[number];
 // ========================
 // Order Status Enum
 // ========================
-export const orderStatuses = ['completed', 'in_progress'] as const;
+export const orderStatuses = ['completed', 'in_progress', 'cancelled', 'pending_payment'] as const; // Added pending_payment, cancelled
 export const orderStatusEnum = pgEnum('order_status', orderStatuses);
 export type OrderStatus = typeof orderStatuses[number];
 
 // ========================
 // Payment Method Enum
 // ========================
-export const paymentMethods = ['m-pesa', 'stripe', 'paypal'] as const;
+export const paymentMethods = ['mpesa', 'paystack', 'credit_card'] as const; // Added credit_card
 export const paymentMethodEnum = pgEnum('payment_method', paymentMethods);
 export type PaymentMethod = typeof paymentMethods[number];
+
+// ========================
+// Payment Status Enum (New for Payment table)
+// ========================
+export const paymentStatuses = ['pending', 'completed', 'failed', 'refunded'] as const;
+export const paymentStatusEnum = pgEnum('payment_status', paymentStatuses);
+export type PaymentStatus = typeof paymentStatuses[number];
 
 
 // User Table
@@ -64,14 +72,14 @@ export const User = pgTable('User', {
 // Payment Table
 export const Payment = pgTable('Payment', {
     id: serial('id').primaryKey(),
-    orderId: integer('order_id').notNull(),
+    orderId: integer('order_id').notNull().references(() => Orders.id), // Added reference to Orders
     amount: bigint('amount', { mode: 'number' }).notNull(),
-    paymentStatus: bigint('paymentStatus', { mode: 'number' }).notNull(),
-    paymentDate: bigint('paymentDate', { mode: 'number' }).notNull(),
-    paymentMethod: bigint('paymentMethod', { mode: 'number' }).notNull(),
-    transactionId: bigint('transaction_ID', { mode: 'number' }).notNull(),
-    createdAt: bigint('createdAt', { mode: 'number' }).notNull(),
-    updatedAt: bigint('updatedAt', { mode: 'number' }).notNull(),
+    paymentStatus: paymentStatusEnum('payment_status').notNull().default('pending'), // Changed to enum
+    paymentDate: timestamp('payment_date').notNull().defaultNow(), // Changed to timestamp
+    paymentMethod: paymentMethodEnum('payment_method').notNull(), // Changed to enum
+    transactionId: varchar('transaction_ID').notNull(), // Changed to varchar for typical transaction IDs
+    createdAt: timestamp('createdAt').notNull().defaultNow(), // Changed to timestamp
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(), // Changed to timestamp
 });
 
 // CustomerSupport Table
@@ -126,8 +134,8 @@ export const Orders = pgTable('orders', {
     userId: integer('user_id').references(() => User.id),
     totalAmount: bigint('total_amount', { mode: 'number' }),
     status: orderStatusEnum('status').notNull().default('in_progress'),
-    paymentMethod: paymentMethodEnum('payment_method').notNull().default('stripe'),
-    transactionId: varchar('transaction_id'),
+    paymentMethod: paymentMethodEnum('payment_method').notNull().default('mpesa'),
+    transactionId: varchar('transaction_id'), // To store the final transaction ID from payment
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
@@ -138,14 +146,14 @@ export const OrderItems = pgTable('order_items', {
     orderId: integer('order_id').references(() => Orders.id),
     ticketTypeId: integer('ticket_type_id').references(() => TicketTypes.id),
     quantity: integer('quantity'),
-    unitPrice: integer('unit_price'),
-    subtotal: integer('subtotal'),
+    unitPrice: bigint('unit_price', { mode: 'number' }), // Changed to bigint for consistency with price
+    subtotal: bigint('subtotal', { mode: 'number' }), // Changed to bigint for consistency with price
 });
 
 // Tickets Table
 export const Tickets = pgTable('tickets', {
     id: serial('id').primaryKey(),
-    orderItemId: bigint('order_item_id', { mode: 'number' }),
+    orderItemId: integer('order_item_id').references(() => OrderItems.id), // Corrected to integer
     userId: integer('user_id').notNull().references(() => User.id),
     eventId: integer('event_id').notNull().references(() => Events.id),
     ticketTypeId: integer('ticket_type_id').references(() => TicketTypes.id),
@@ -166,10 +174,94 @@ export const TicketLogs = pgTable('ticket_logs', {
     id: serial('id').primaryKey(),
     ticketId: integer('ticket_id').notNull().references(() => Tickets.id),
     isValid: boolean("is_valid").default(false).notNull(),
-    reasonForOverride: varchar().notNull(),
+    reasonForOverride: varchar('reason_for_override').notNull(),
     overriddenByUserId: integer('overridden_by_user_id').references(() => User.id),
     createdAt: timestamp('created_at').defaultNow(),
 });
+
+
+// Define relations for easier querying
+export const userRelations = relations(User, ({ many }) => ({
+    orders: many(Orders),
+    customerSupports: many(CustomerSupport),
+    tickets: many(Tickets),
+    staffAssignments: many(StaffAssignments),
+}));
+
+export const orderRelations = relations(Orders, ({ one, many }) => ({
+    user: one(User, {
+        fields: [Orders.userId],
+        references: [User.id],
+    }),
+    orderItems: many(OrderItems),
+    payments: many(Payment),
+}));
+
+export const orderItemRelations = relations(OrderItems, ({ one, many }) => ({
+    order: one(Orders, {
+        fields: [OrderItems.orderId],
+        references: [Orders.id],
+    }),
+    ticketType: one(TicketTypes, {
+        fields: [OrderItems.ticketTypeId],
+        references: [TicketTypes.id],
+    }),
+    tickets: many(Tickets),
+}));
+
+export const ticketTypeRelations = relations(TicketTypes, ({ one, many }) => ({
+    event: one(Events, {
+        fields: [TicketTypes.eventId],
+        references: [Events.id],
+    }),
+    orderItems: many(OrderItems),
+    tickets: many(Tickets),
+}));
+
+export const eventRelations = relations(Events, ({ one, many }) => ({
+    venue: one(Venue, {
+        fields: [Events.VenueId],
+        references: [Venue.id],
+    }),
+    organizer: one(User, {
+        fields: [Events.organizerId],
+        references: [User.id],
+    }),
+    ticketTypes: many(TicketTypes),
+    tickets: many(Tickets),
+    staffAssignments: many(StaffAssignments),
+}));
+
+export const ticketRelations = relations(Tickets, ({ one, many }) => ({
+    orderItem: one(OrderItems, {
+        fields: [Tickets.orderItemId],
+        references: [OrderItems.id],
+    }),
+    user: one(User, {
+        fields: [Tickets.userId],
+        references: [User.id],
+    }),
+    event: one(Events, {
+        fields: [Tickets.eventId],
+        references: [Events.id],
+    }),
+    ticketType: one(TicketTypes, {
+        fields: [Tickets.ticketTypeId],
+        references: [TicketTypes.id],
+    }),
+    scannedBy: one(User, {
+        fields: [Tickets.scannedByUser],
+        references: [User.id],
+    }),
+    ticketLogs: many(TicketLogs),
+}));
+
+export const paymentRelations = relations(Payment, ({ one }) => ({
+    order: one(Orders, {
+        fields: [Payment.orderId],
+        references: [Orders.id],
+    }),
+}));
 
 
 export type TicketInsert = typeof Tickets.$inferInsert;
@@ -199,5 +291,5 @@ export type PaymentSelect = typeof Payment.$inferSelect;
 export type UserInsert = typeof User.$inferInsert;
 export type UserSelect = typeof User.$inferSelect;
 
-export type TicketLogsInsert = typeof Tickets.$inferInsert;
-export type TicketLogsSelect = typeof Tickets.$inferSelect;
+export type TicketLogsInsert = typeof TicketLogs.$inferInsert; // Corrected type
+export type TicketLogsSelect = typeof TicketLogs.$inferSelect; // Corrected type
