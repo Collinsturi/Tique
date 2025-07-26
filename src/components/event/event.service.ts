@@ -64,6 +64,8 @@ export class EventService {
                 eventTime: Events.eventTime,
                 category: Events.Category,
                 organizerId: Events.organizerId,
+                posterImageUrl: Events.posterImageUrl,
+                thumbnailImageUrl: Events.thumbnailImageUrl,
                 venueId: Events.VenueId,
                 venueName: Venue.name,
                 venueAddress: Venue.addresses,
@@ -117,6 +119,8 @@ export class EventService {
                 id: Events.id,
                 title: Events.title,
                 description: Events.Description,
+                posterImageUrl: Events.posterImageUrl,
+                thumbnailImageUrl: Events.thumbnailImageUrl,
                 eventDate: Events.eventDate,
                 eventTime: Events.eventTime,
                 category: Events.Category,
@@ -146,6 +150,7 @@ export class EventService {
                 Venue.capacity
             );
 
+        console.log(event)
         if (event.length === 0) throw new Error(`Event with ID ${id} not found`);
 
         // Get ticket types and tickets separately
@@ -182,7 +187,6 @@ export class EventService {
         const payload = cleanedPayload as CreateEventServicePayload;
 
         // 2. Retrieve Organizer
-        console.log("🔍 Finding organizer with email:", payload.organizerEmail);
         const [organizer] = await db
             .select()
             .from(User)
@@ -241,6 +245,10 @@ export class EventService {
             eventDate: payload.startDate.split('T')[0], // 'YYYY-MM-DD'
             eventTime: payload.startDate.split('T')[1]?.split('.')[0] ?? '00:00:00', // 'HH:mm:ss'
             organizerId,
+            latitude: payload.latitude ?? null,
+            longitude: payload.longitude ?? null,
+            posterImageUrl: payload.posterImageUrl ?? null,
+            thumbnailImageUrl: payload.thumbnailImageUrl ?? null,
         };
 
         const [newEvent] = await db.insert(Events).values(eventInsertData).returning().execute();
@@ -408,6 +416,8 @@ export class EventService {
                 eventId: Events.id,
                 title: Events.title,
                 eventDate: Events.eventDate,
+                posterImageUrl: Events.posterImageUrl,
+                thumbnailImageUrl: Events.thumbnailImageUrl,
                 eventTime: Events.eventTime,
                 venueName: Venue.name,
                 venueAddress: Venue.addresses,
@@ -532,6 +542,8 @@ export class EventService {
                 eventTime: Events.eventTime,
                 category: Events.Category,
                 venueName: Venue.name,
+                posterImageUrl: Events.posterImageUrl,
+                thumbnailImageUrl: Events.thumbnailImageUrl,
                 venueAddress: Venue.addresses,
                 ticketsSold: sql<number>`COALESCE(SUM(${TicketTypes.quantitySold}), 0)`,
                 ticketsScanned: sql<number>`COALESCE(SUM(CASE WHEN ${Tickets.isScanned} = true THEN 1 ELSE 0 END), 0)`,
@@ -583,6 +595,8 @@ export class EventService {
                 eventTime: Events.eventTime,
                 category: Events.Category,
                 venueName: Venue.name,
+                posterImageUrl: Events.posterImageUrl,
+                thumbnailImageUrl: Events.thumbnailImageUrl,
                 venueAddress: Venue.addresses,
                 ticketsSold: sql<number>`COALESCE(SUM(${TicketTypes.quantitySold}), 0)`,
                 ticketsScanned: sql<number>`COALESCE(SUM(CASE WHEN ${Tickets.isScanned} = true THEN 1 ELSE 0 END), 0)`,

@@ -114,7 +114,11 @@ export const Events = pgTable('Events', {
     eventTime: time('event_time').notNull(),
     createdAt: timestamp('createdAt').defaultNow().notNull(),
     updatedAt: timestamp('updatedAt').defaultNow().notNull(),
-    organizerId:  integer('organizer_id').notNull().references(() => User.id)
+    organizerId:  integer('organizer_id').notNull().references(() => User.id),
+    latitude: varchar('latitude'),
+    longitude: varchar('longitude'),
+    posterImageUrl: varchar('posterImageUrl'),
+    thumbnailImageUrl: varchar('thumbnailImageUrl')
 });
 
 // Ticket Types Table

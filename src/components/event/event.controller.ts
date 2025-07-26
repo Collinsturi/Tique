@@ -50,8 +50,8 @@ export class EventController {
             country: rawEventData.country,
             // Latitude and Longitude are currently ignored by the service based on your Venue schema
             // but can be included here if you intend to add them to your Venue schema later.
-            latitude: rawEventData.latitude ? parseFloat(rawEventData.latitude) : null,
-            longitude: rawEventData.longitude ? parseFloat(rawEventData.longitude) : null,
+            latitude: rawEventData.latitude,
+            longitude: rawEventData.longitude ,
             // posterImageUrl and thumbnailImageUrl are currently ignored by the service based on your Events schema
             posterImageUrl: rawEventData.posterImageUrl || undefined, // Use undefined to omit if empty string
             thumbnailImageUrl: rawEventData.thumbnailImageUrl || undefined,
