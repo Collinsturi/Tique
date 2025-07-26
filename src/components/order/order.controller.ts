@@ -33,6 +33,7 @@ export class OrderController {
 
     create = async (req: Request, res: Response) => {
 
+        console.log("@@@", req.body);
         const { userId, orderItems }: { userId: number, orderItems: OrderItemInsert[] } = req.body;
 
         if (!userId || !orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {

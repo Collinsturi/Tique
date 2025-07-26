@@ -116,4 +116,17 @@ export class AnalyticsController {
             res.status(500).json({ error: err.message });
         }
     }
+
+    async getAttendeeNotification(req: Request, res: Response) {
+        try {
+            const userEmail = req.params.email;
+            if (!userEmail) return res.status(401).json({ error: "Unauthorized" });
+
+            const result = await service.getAttendeeNotification(userEmail);
+            res.json(result);
+        }catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+
+    }
 }

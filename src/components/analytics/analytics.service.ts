@@ -9,6 +9,8 @@ import {
     Payment,
 } from "../../drizzle/schema";
 import db from "../../drizzle/db";
+import { addDays, startOfDay, endOfDay, format } from 'date-fns';
+
 
 export class AnalyticsService {
     //Admin Dashboard Summary
@@ -354,5 +356,57 @@ export class AnalyticsService {
             .groupBy(Events.id, Events.title);
 
         return result;
+    }
+
+    //Get user notification
+     async getAttendeeNotification(email: string): Promise<string[] | null> {
+        // 1. Get user
+        const user = await db.query.User.findFirst({
+            where: eq(User.email, email)
+        });
+
+        if (!user) return null;
+
+        // 2. Get user tickets with event and ticketType
+        const userTickets = await db.query.Tickets.findMany({
+            where: eq(Tickets.userId, user.id),
+            with: {
+                event: true,
+                ticketType: true
+            }
+        });
+
+        // 3. Define date range: 1 or 2 days ahead
+        const today = new Date();
+        const oneDayAhead = addDays(today, 1);
+        const twoDaysAhead = addDays(today, 2);
+
+        const upcomingEventNotifications = userTickets
+            .filter(ticket => {
+                const eventDate = new Date(ticket.event.eventDate);
+                return (
+                    eventDate >= startOfDay(oneDayAhead) &&
+                    eventDate <= endOfDay(twoDaysAhead)
+                );
+            })
+            .map(ticket => {
+                const { title, eventDate, eventTime } = ticket.event;
+                return `Reminder: '${title}' starts on ${format(eventDate, 'MMMM d')} at ${eventTime}.`;
+            });
+
+        // 4. Get user's pending orders
+        const pendingOrders = await db.query.Orders.findMany({
+            where: and(
+                eq(Orders.userId, user.id),
+                eq(Orders.status, 'pending_payment')
+            )
+        });
+
+        const pendingOrderNotifications = pendingOrders.map(order => {
+            return `Order #${order.id} is still pending payment (KES ${order.totalAmount.toLocaleString()}).`;
+        });
+
+        // 5. Return all notifications
+        return [...upcomingEventNotifications, ...pendingOrderNotifications];
     }
 }

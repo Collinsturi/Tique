@@ -127,7 +127,8 @@ export const loginUserController = async (req: Request, res: Response) => {
                 first_name: userExist.firstName,
                 last_name: userExist.lastName,
                 email: userExist.email,
-                role: userExist.role
+                role: userExist.role,
+                profilePicture: userExist.profilePicture,
             }
         });
     } catch (error: any) {

@@ -143,10 +143,10 @@ export class OrderService {
             }
 
             // Return the complete order details (order, items, tickets)
-            return await this.getOrderById(newOrder.id);
+            return newOrder.id;
         });
 
-        return result;
+        return await this.getOrderById(result);
     }
 
     async updateOrder(id: number, updateData: Partial<OrderInsert>) {

@@ -5,6 +5,9 @@ import { type UserInsert, User, UserRole } from "../../drizzle/schema";
 export class UserService {
     static async createUser(user: UserInsert) {
         try {
+            if(user.profilePicture == null || user.profilePicture == undefined){
+                user.profilePicture = `https://placehold.co/600x400?text=${user.firstName}+${user.lastName}+Profile+Picture`;
+            }
             // If it's a social login (has googleId but no password), set password to empty string
             // and mark as verified.
             if (user.googleId && !user.password) {
@@ -80,6 +83,7 @@ export class UserService {
                     password: true,
                     role: true,
                     isVerified: true,
+                    profilePicture: true,
                 },
                 where: eq(User.email, email)
             });

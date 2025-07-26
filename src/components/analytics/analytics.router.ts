@@ -19,4 +19,6 @@ router.get("/event/:eventId/ticket-distribution", asyncHandler(controller.getTic
 router.get("/organizer/wallet/:email", asyncHandler(controller.getOrganizerEarningsSummary));
 router.get("/organizer/revenue/:email", asyncHandler(controller.getRevenuePerEvent));
 
+router.get("/platform/attendee/notifications/:email", asyncHandler(controller.getAttendeeNotification))
+
 export default router;
