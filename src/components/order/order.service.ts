@@ -4,10 +4,7 @@ import { eq, sql } from "drizzle-orm";
 import { v4 as uuidv4 } from 'uuid'; // For generating unique ticket codes
 
 export class OrderService {
-    /**
-     * Fetches all orders from the database.
-     * @returns A promise that resolves to an array of orders.
-     */
+
     async getAllOrders() {
         try {
             return await db.select().from(Orders);
@@ -17,11 +14,6 @@ export class OrderService {
         }
     }
 
-    /**
-     * Fetches a single order by its ID, including its associated order items.
-     * @param id The ID of the order to fetch.
-     * @returns A promise that resolves to an object containing the order and its items, or null if not found.
-     */
     async getOrderById(id: number) {
         if (isNaN(id)) throw new Error("Invalid order ID provided.");
 
@@ -45,13 +37,6 @@ export class OrderService {
         }
     }
 
-    /**
-     * Creates a new order, processes order items, updates ticket quantities, and generates individual tickets.
-     * This operation is wrapped in a transaction to ensure atomicity.
-     * @param userId The ID of the user creating the order.
-     * @param orderItemsData An array of order item data (ticketTypeId, quantity).
-     * @returns A promise that resolves to the newly created order with its items and generated tickets.
-     */
     async createOrder(userId: number, orderItemsData: Omit<OrderItemInsert, 'orderId' | 'unitPrice' | 'subtotal'>[]) {
         if (!userId || !orderItemsData || !Array.isArray(orderItemsData) || orderItemsData.length === 0) {
             throw new Error("User ID and order items are required to create an order.");
@@ -164,12 +149,6 @@ export class OrderService {
         return result;
     }
 
-    /**
-     * Updates an existing order.
-     * @param id The ID of the order to update.
-     * @param updateData The partial data to update the order with.
-     * @returns A promise that resolves to the updated order, or null if the order was not found.
-     */
     async updateOrder(id: number, updateData: Partial<OrderInsert>) {
         if (!updateData || Object.keys(updateData).length === 0) {
             console.warn(`No fields provided for update on order ID ${id}`);
@@ -190,12 +169,6 @@ export class OrderService {
         }
     }
 
-    /**
-     * Deletes an order and its associated order items.
-     * This operation is wrapped in a transaction to ensure atomicity.
-     * @param id The ID of the order to delete.
-     * @returns A promise that resolves to the deleted order, or null if not found.
-     */
     async deleteOrder(id: number) {
         if (isNaN(id)) throw new Error("Invalid order ID provided for deletion.");
 
@@ -224,11 +197,6 @@ export class OrderService {
         }
     }
 
-    /**
-     * Generates a unique code for a ticket.
-     * In a production environment, consider a more robust, collision-resistant unique ID generation strategy.
-     * @returns A unique string code.
-     */
     private generateUniqueTicketCode(): string {
         return uuidv4(); // Using uuid library for robust unique ID generation
     }

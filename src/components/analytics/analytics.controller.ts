@@ -12,7 +12,7 @@ export class AnalyticsController {
 
             const result = await service.AdminDashboardAnalytics(adminEmail);
             res.json(result);
-        } catch (err) {
+        } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
     }
@@ -21,7 +21,7 @@ export class AnalyticsController {
         try {
             const summary = await service.getPlatformSummary();
             res.json(summary);
-        } catch (err) {
+        } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
     }
@@ -30,7 +30,7 @@ export class AnalyticsController {
         try {
             const trends = await service.getMonthlySalesTrends();
             res.json(trends);
-        } catch (err) {
+        } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
     }
@@ -39,7 +39,7 @@ export class AnalyticsController {
         try {
             const events = await service.getTopSellingEvents();
             res.json(events);
-        } catch (err) {
+        } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
     }
@@ -48,7 +48,7 @@ export class AnalyticsController {
         try {
             const result = await service.getOverallTicketScanStatus();
             res.json(result);
-        } catch (err) {
+        } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
     }
@@ -58,7 +58,7 @@ export class AnalyticsController {
             const { eventId } = req.params;
             const result = await service.getEventTicketSummary(Number(eventId));
             res.json(result);
-        } catch (err) {
+        } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
     }
@@ -68,7 +68,7 @@ export class AnalyticsController {
             const { eventId } = req.params;
             const result = await service.getEventScanLog(Number(eventId));
             res.json(result);
-        } catch (err) {
+        } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
     }
@@ -78,7 +78,7 @@ export class AnalyticsController {
             const { eventId } = req.params;
             const result = await service.getTicketTypeDistribution(Number(eventId));
             res.json(result);
-        } catch (err) {
+        } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
     }
@@ -88,7 +88,7 @@ export class AnalyticsController {
             const { eventId } = req.params;
             const result = await service.getEventScanStatus(Number(eventId));
             res.json(result);
-        } catch (err) {
+        } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
     }
@@ -100,7 +100,7 @@ export class AnalyticsController {
 
             const result = await service.getOrganizerEarningsSummary(Number(userId));
             res.json(result);
-        } catch (err) {
+        } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
     }
@@ -112,7 +112,7 @@ export class AnalyticsController {
 
             const result = await service.getRevenuePerEvent(userEmail);
             res.json(result);
-        } catch (err) {
+        } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
     }

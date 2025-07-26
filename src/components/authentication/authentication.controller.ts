@@ -5,7 +5,6 @@ import jwt from "jsonwebtoken";
 import "dotenv/config";
 import { sendEmail } from "../../communication/mailer";
 import { type UserInsert } from "../../drizzle/schema";
-import passport from "passport"; // Import passport
 
 // Create user controller
 export const createUserController = async (req: Request, res: Response) => {
@@ -139,7 +138,7 @@ export const loginUserController = async (req: Request, res: Response) => {
 // Controller to initiate Google OAuth (handled by Passport middleware)
 export const googleAuthRedirectController = (req: Request, res: Response) => {
     // This function will typically not be reached directly as Passport handles the redirect.
-    // It's here for completeness if you need to do something before Passport redirects.
+    // It's here for completeness if I need to do something before Passport redirects.
 };
 
 // Controller for Google OAuth callback

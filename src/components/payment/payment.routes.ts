@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { paymentController } from "./payment.controller";
-import {asyncHandler} from "../utils/asyncHandler"; // Assuming you have this utility
+import {asyncHandler} from "../utils/asyncHandler";
 
 const router = Router();
 

@@ -3,11 +3,6 @@ import { orderService } from "./order.service";
 import { OrderItemInsert } from "../../drizzle/schema";
 
 export class OrderController {
-    /**
-     * Retrieves all orders.
-     * @param req The Express request object.
-     * @param res The Express response object.
-     */
     getAll = async (req: Request, res: Response) => {
         try {
             const orders = await orderService.getAllOrders();
@@ -18,11 +13,6 @@ export class OrderController {
         }
     }
 
-    /**
-     * Retrieves an order by its ID, including its items.
-     * @param req The Express request object.
-     * @param res The Express response object.
-     */
     getById = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
         if (isNaN(id)) {
@@ -41,15 +31,8 @@ export class OrderController {
         }
     }
 
-    /**
-     * Creates a new order and associated order items and tickets.
-     * This method handles the "add to cart" and "checkout" logic.
-     * @param req The Express request object. Expected body: `{ userId: number, orderItems: OrderItemInsert[] }`
-     * @param res The Express response object.
-     */
     create = async (req: Request, res: Response) => {
-        // In a real application, userId would typically come from an authenticated user session (e.g., req.user.id)
-        // For this example, we'll assume it's passed in the request body for simplicity.
+
         const { userId, orderItems }: { userId: number, orderItems: OrderItemInsert[] } = req.body;
 
         if (!userId || !orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
@@ -72,11 +55,6 @@ export class OrderController {
         }
     }
 
-    /**
-     * Updates an existing order.
-     * @param req The Express request object.
-     * @param res The Express response object.
-     */
     update = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
 
@@ -102,11 +80,6 @@ export class OrderController {
         }
     }
 
-    /**
-     * Deletes an order and its associated order items.
-     * @param req The Express request object.
-     * @param res The Express response object.
-     */
     delete = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
         if (isNaN(id)) {

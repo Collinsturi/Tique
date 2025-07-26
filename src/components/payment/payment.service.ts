@@ -23,10 +23,6 @@ const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY!;
 const PAYSTACK_WEBHOOK_URL = process.env.PAYSTACK_WEBHOOK_URL!;
 
 export class PaymentService {
-    /**
-     * Fetches all payment records.
-     * @returns A promise that resolves to an array of payments.
-     */
     async getAllPayments() {
         try {
             return await db.select().from(Payment);
@@ -36,11 +32,6 @@ export class PaymentService {
         }
     }
 
-    /**
-     * Fetches a single payment record by its ID.
-     * @param id The ID of the payment to fetch.
-     * @returns A promise that resolves to the payment object, or null if not found.
-     */
     async getPaymentById(id: number) {
         if (isNaN(id)) throw new Error("Invalid payment ID provided.");
 
@@ -53,12 +44,6 @@ export class PaymentService {
         }
     }
 
-    /**
-     * Creates a new payment record and updates the associated order's status.
-     * This operation is wrapped in a transaction to ensure atomicity.
-     * @param paymentData The data for the new payment.
-     * @returns A promise that resolves to the newly created payment.
-     */
     async createPayment(paymentData: PaymentInsert) {
         if (!paymentData || !paymentData.orderId || !paymentData.amount || !paymentData.paymentMethod || !paymentData.transactionId) {
             throw new Error("Missing required payment data.");
@@ -112,12 +97,7 @@ export class PaymentService {
         return result;
     }
 
-    /**
-     * Updates an existing payment record.
-     * @param id The ID of the payment to update.
-     * @param updateData The partial data to update the payment with.
-     * @returns A promise that resolves to the updated payment, or null if the payment was not found.
-     */
+
     async updatePayment(id: number, updateData: Partial<PaymentInsert>) {
         if (!updateData || Object.keys(updateData).length === 0) {
             console.warn(`No fields provided for update on payment ID ${id}`);
@@ -138,11 +118,6 @@ export class PaymentService {
         }
     }
 
-    /**
-     * Deletes a payment record.
-     * @param id The ID of the payment to delete.
-     * @returns A promise that resolves to the deleted payment, or null if not found.
-     */
     async deletePayment(id: number) {
         if (isNaN(id)) throw new Error("Invalid payment ID provided for deletion.");
 
@@ -158,14 +133,7 @@ export class PaymentService {
         }
     }
 
-    /**
-     * Initiates an M-Pesa STK Push payment.
-     * This function makes an API call to Safaricom's Daraja API.
-     * @param orderId The ID of the order associated with this payment.
-     * @param amount The amount to be paid.
-     * @param phoneNumber The customer's M-Pesa phone number (254...).
-     * @returns A promise that resolves to the M-Pesa API response.
-     */
+
     async initiateMpesaSTKPush(orderId: number, amount: number, phoneNumber: string) {
         // Validation
         if (!MPESA_SHORTCODE || !MPESA_PASSKEY || !MPESA_CALLBACK_URL) {
@@ -264,10 +232,6 @@ export class PaymentService {
         }
     }
 
-    /**
-     * Processes the M-Pesa callback data and updates the payment and order statuses.
-     * @param callbackData The raw callback data received from M-Pesa.
-     */
     async processMpesaCallback(callbackData: any) {
         const { Body } = callbackData;
         const { stkCallback } = Body;
@@ -347,14 +311,6 @@ export class PaymentService {
         console.log(`Payment for order ${paymentRecord.orderId} updated to ${paymentStatus}. Order status updated to ${orderStatus}.`);
     }
 
-    /**
-     * Initiates a Paystack payment transaction.
-     * @param orderId The ID of the order associated with this payment.
-     * @param amount The amount to be paid in your base currency.
-     * @param email Customer's email address.
-     * @param callbackUrl Optional callback URL after payment.
-     * @returns A promise that resolves to the Paystack initialization response.
-     */
     async initiatePaystackPayment(orderId: number, amount: number, email: string, callbackUrl?: string) {
         // Validation
         if (!PAYSTACK_SECRET_KEY) {
@@ -421,11 +377,6 @@ export class PaymentService {
         }
     }
 
-    /**
-     * Verifies a Paystack payment transaction.
-     * @param reference The transaction reference to verify.
-     * @returns A promise that resolves to the verification result.
-     */
     async verifyPaystackPayment(reference: string) {
         try {
             const verificationResponse = await paystackUtils.verifyPaystackTransaction(reference);
@@ -455,9 +406,6 @@ export class PaymentService {
         }
     }
 
-    /**
-     * Processes successful Paystack payment.
-     */
     private async processPaystackSuccess(transactionData: any) {
         const { reference, amount, customer } = transactionData;
 
@@ -492,9 +440,6 @@ export class PaymentService {
         console.log(`Paystack payment for order ${paymentRecord.orderId} completed successfully.`);
     }
 
-    /**
-     * Processes failed Paystack payment.
-     */
     private async processPaystackFailure(reference: string, verificationData: any) {
         // Find the payment record
         const [paymentRecord] = await db.select().from(Payment)
@@ -524,10 +469,6 @@ export class PaymentService {
         console.log(`Paystack payment for order ${paymentRecord.orderId} failed.`);
     }
 
-    /**
-     * Processes Paystack webhooks.
-     * @param webhookData The webhook payload from Paystack.
-     */
     async processPaystackWebhook(webhookData: any) {
         const { event, data } = webhookData;
 

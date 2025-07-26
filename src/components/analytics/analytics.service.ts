@@ -56,7 +56,7 @@ export class AnalyticsService {
                 time: Events.eventTime,
             })
             .from(Events)
-            .where(and(eq(Events.organizerId, admin.id), gte(Events.eventDate, today)))
+            .where(and(eq(Events.organizerId, admin.id)))
             .orderBy(Events.eventDate);
 
         // Recent Activity (Recent ticket purchases)
@@ -67,9 +67,13 @@ export class AnalyticsService {
                 eventId: Events.id,
                 eventTitle: Events.title,
                 createdAt: Tickets.createdAt,
+                user: User.firstName,
+                ticketType: TicketTypes.typeName,
             })
             .from(Tickets)
             .leftJoin(Events, eq(Tickets.eventId, Events.id))
+            .leftJoin(User, eq(Tickets.userId, User.id))
+            .leftJoin(TicketTypes, eq(Tickets.ticketTypeId, TicketTypes.id))
             .where(eq(Events.organizerId, admin.id))
             .orderBy(desc(Tickets.createdAt))
             .limit(10);
@@ -286,7 +290,11 @@ export class AnalyticsService {
             .from(Events)
             .where(eq(Events.organizerId, userId));
 
+        console.log(events);
+
         const eventIds = events.map(e => e.id);
+
+        console.log(eventIds);
 
         if (eventIds.length === 0) {
             return {

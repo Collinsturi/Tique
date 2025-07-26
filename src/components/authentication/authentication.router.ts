@@ -11,7 +11,7 @@ import {
 } from "./authentication.controller";
 import {asyncHandler} from "../utils/asyncHandler";
 import {adminRoleAuth} from "../../middleware/bearAuth";
-import passport from "passport"; // Import passport
+import passport from "passport";
 
 const router = Router();
 

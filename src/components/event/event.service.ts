@@ -169,12 +169,24 @@ export class EventService {
 
 
     // Create a new event
-     async createEvent(eventPayload: CreateEventServicePayload) {
-        // 1. Find Organizer
+    async createEvent(eventPayload: CreateEventServicePayload) {
+
+        // // Debug: Check each property before cleaning
+        // for (const [key, value] of Object.entries(eventPayload)) {
+        //     console.log(`🔍 ${key}:`, value, `(${typeof value}) - undefined? ${value === undefined}`);
+        // }
+
+        // 1. Clean the payload
+        const cleanedPayload = this.removeUndefinedFields(eventPayload);
+
+        const payload = cleanedPayload as CreateEventServicePayload;
+
+        // 2. Retrieve Organizer
+        console.log("🔍 Finding organizer with email:", payload.organizerEmail);
         const [organizer] = await db
             .select()
             .from(User)
-            .where(eq(User.email, eventPayload.organizerEmail))
+            .where(eq(User.email, payload.organizerEmail))
             .execute();
 
         if (!organizer) {
@@ -183,14 +195,14 @@ export class EventService {
 
         const organizerId = organizer.id;
 
-        // 2. Handle Venue: use provided `venueId` or create new
+        // 3. Handle Venue
         let venueId: number;
 
-        if (eventPayload.venueId) {
+        if (payload.venueId) {
             const [existingVenue] = await db
                 .select()
                 .from(Venue)
-                .where(eq(Venue.id, eventPayload.venueId))
+                .where(eq(Venue.id, payload.venueId))
                 .execute();
 
             if (!existingVenue) {
@@ -199,10 +211,16 @@ export class EventService {
 
             venueId = existingVenue.id;
         } else {
+            console.log("🏗 Creating new venue...");
+
+            if (!payload.address || !payload.city || !payload.country) {
+                throw new Error('Address information is required when creating a new venue');
+            }
+
             const venueInsertData = {
-                name: `${eventPayload.name} Venue`,
-                addresses: `${eventPayload.address}, ${eventPayload.city}, ${eventPayload.country}`,
-                capacity: eventPayload.ticketTypes.reduce((sum, tt) => sum + tt.quantityAvailable, 0),
+                name: `${payload.name} Venue`,
+                addresses: `${payload.address}, ${payload.city}, ${payload.country}`,
+                capacity: payload.ticketTypes.reduce((sum, tt) => sum + tt.quantityAvailable, 0),
             };
 
             const [newVenue] = await db.insert(Venue).values(venueInsertData).returning().execute();
@@ -214,14 +232,14 @@ export class EventService {
             venueId = newVenue.id;
         }
 
-        // 3. Insert Event
+        // 4. Insert Event
         const eventInsertData = {
-            title: eventPayload.name,
-            Description: eventPayload.description,
+            title: payload.name,
+            Description: payload.description,
             VenueId: venueId,
-            Category: eventPayload.category,
-            eventDate: eventPayload.startDate.split('T')[0], // 'YYYY-MM-DD'
-            eventTime: eventPayload.startDate.split('T')[1]?.split('.')[0] ?? '00:00:00', // 'HH:mm:ss'
+            Category: payload.category,
+            eventDate: payload.startDate.split('T')[0], // 'YYYY-MM-DD'
+            eventTime: payload.startDate.split('T')[1]?.split('.')[0] ?? '00:00:00', // 'HH:mm:ss'
             organizerId,
         };
 
@@ -231,8 +249,9 @@ export class EventService {
             throw new Error('Failed to create event.');
         }
 
-        // 4. Insert Ticket Types
-        const ticketTypeInserts = eventPayload.ticketTypes.map((tt) => ({
+
+        // 5. Insert Ticket Types
+        const ticketTypeInserts = payload.ticketTypes.map((tt) => ({
             eventId: newEvent.id,
             typeName: tt.name,
             price: tt.price,
@@ -242,14 +261,62 @@ export class EventService {
         }));
 
         if (ticketTypeInserts.length > 0) {
-            await db.insert(TicketTypes).values(ticketTypeInserts).execute();
+            const result = await db.insert(TicketTypes).values(ticketTypeInserts).execute();
         }
-
         return {
             success: true,
             message: 'Event created successfully!',
             eventId: newEvent.id,
         };
+    }
+
+    private removeUndefinedFields<T extends Record<string, any>>(obj: T): Partial<T> {
+        // Fields that should be preserved even if they might seem "empty"
+        const preserveFields = ['venueId', 'latitude', 'longitude', 'price', 'quantityAvailable'];
+
+        const cleaned: any = {};
+
+        for (const [key, value] of Object.entries(obj)) {
+            console.log(`🔍 Processing key: ${key}, value:`, value, `type: ${typeof value}`);
+
+            // Always preserve specific important fields (even if null/0)
+            if (preserveFields.includes(key) && value !== undefined) {
+                cleaned[key] = value;
+                continue;
+            }
+
+            // Handle undefined values
+            if (value === undefined) {
+                continue;
+            }
+
+            // Handle arrays
+            if (Array.isArray(value)) {
+                const cleanedArray = value
+                    .map(item => typeof item === 'object' && item !== null
+                        ? this.removeUndefinedFields(item)
+                        : item)
+                    .filter(item => item !== undefined);
+
+                if (cleanedArray.length > 0) {
+                    cleaned[key] = cleanedArray;
+                }
+            }
+            // Handle nested objects
+            else if (typeof value === 'object' && value !== null) {
+                const cleanedNested = this.removeUndefinedFields(value);
+                // Only add if the cleaned object has keys OR if it's a preserved field
+                if (Object.keys(cleanedNested).length > 0 || preserveFields.includes(key)) {
+                    cleaned[key] = cleanedNested;
+                }
+            }
+            // Handle primitive values
+            else {
+                cleaned[key] = value;
+            }
+        }
+
+        return cleaned;
     }
     // Update an event
     async updateEvent(id: number, eventData: Partial<EventInsert>) {
@@ -342,19 +409,33 @@ export class EventService {
                 title: Events.title,
                 eventDate: Events.eventDate,
                 eventTime: Events.eventTime,
-                ticketsSold: sql<number>`COALESCE(SUM(${TicketTypes.quantitySold}), 0)`,
-                ticketsScanned: sql<number>`COALESCE(SUM(CASE WHEN ${Tickets.isScanned} = true THEN 1 ELSE 0 END), 0)`,
-                ticketsRemaining: sql<number>`COALESCE(SUM(${TicketTypes.quantityAvailable} - ${TicketTypes.quantitySold}), 0)`,
+                venueName: Venue.name,
+                venueAddress: Venue.addresses,
+                ticketsSold: sql<number>`(
+                          SELECT COALESCE(SUM(tt.quantity_sold), 0)
+                          FROM ticket_types tt
+                          WHERE tt.event_id = ${Events.id}
+                        )`.mapWith(Number),
+                                    ticketsRemaining: sql<number>`(
+                          SELECT COALESCE(SUM(tt.quantity_available - tt.quantity_sold), 0)
+                          FROM ticket_types tt
+                          WHERE tt.event_id = ${Events.id}
+                        )`.mapWith(Number),
+                                    ticketsScanned: sql<number>`(
+                          SELECT COALESCE(COUNT(*), 0)
+                          FROM tickets t
+                          WHERE t.event_id = ${Events.id} AND t.is_scanned = true
+                        )`.mapWith(Number),
             })
             .from(Events)
-            .leftJoin(TicketTypes, eq(TicketTypes.eventId, Events.id))
-            .leftJoin(Tickets, eq(Tickets.eventId, Events.id))
-            .where(and(
-                eq(Events.organizerId, user.id),
-                gte(Events.eventDate, today),
-                lte(Events.eventDate, thirtyDaysLater)
-            ))
-            .groupBy(Events.id, Events.title, Events.eventDate, Events.eventTime)
+            .leftJoin(Venue, eq(Events.VenueId, Venue.id))
+            .where(
+                and(
+                    eq(Events.organizerId, user.id),
+                    gte(Events.eventDate, today),
+                    lte(Events.eventDate, thirtyDaysLater)
+                )
+            )
             .orderBy(Events.eventDate);
 
         return events;

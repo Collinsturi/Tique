@@ -1,6 +1,5 @@
 import { eq, sql } from "drizzle-orm";
 import db from "../../drizzle/db";
-// Corrected import: Directly import 'User' (capital U) as it's exported from schema.
 import { type UserInsert, User, UserRole } from "../../drizzle/schema";
 
 export class UserService {
@@ -9,7 +8,7 @@ export class UserService {
             // If it's a social login (has googleId but no password), set password to empty string
             // and mark as verified.
             if (user.googleId && !user.password) {
-                user.password = ''; // Or a specific placeholder for social logins
+                user.password = 'OAUTH_LOGIN';
                 user.isVerified = true;
                 user.verificationCode = 0; // Clear verification code for social logins
             } else if (!user.googleId && !user.password) {
@@ -40,7 +39,7 @@ export class UserService {
     static async findUserByGoogleId(googleId: string) {
         try {
             return await db.query.User.findFirst({
-                where: eq(User.googleId, googleId) // This should now correctly reference the 'googleId' column
+                where: eq(User.googleId, googleId)
             });
         } catch (error) {
             console.error("Error fetching user by Google ID:", error);

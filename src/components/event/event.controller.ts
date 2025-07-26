@@ -54,10 +54,11 @@ export class EventController {
             longitude: rawEventData.longitude ? parseFloat(rawEventData.longitude) : null,
             // posterImageUrl and thumbnailImageUrl are currently ignored by the service based on your Events schema
             posterImageUrl: rawEventData.posterImageUrl || undefined, // Use undefined to omit if empty string
-            thumbnailImageUrl: rawEventData.thumbnailImageUrl || undefined, // Use undefined to omit if empty string
-            organizerEmail: organizerEmail, // The securely obtained organizer email
+            thumbnailImageUrl: rawEventData.thumbnailImageUrl || undefined,
+            organizerEmail: organizerEmail,
+            venueId: rawEventData.venueId,
             ticketTypes: rawEventData.ticketTypes.map((tt: any) => ({
-                name: tt.name,
+                name: tt.typeName,
                 price: parseFloat(tt.price), // Ensure price is a number
                 quantityAvailable: parseInt(tt.quantityAvailable), // Ensure quantity is an integer
                 minPerOrder: parseInt(tt.minPerOrder),
@@ -68,11 +69,9 @@ export class EventController {
             })),
         };
 
-        // Call the service function to handle the business logic and database operations
         const result = await eventService.createEvent(eventPayload);
 
-        // Send a success response
-        res.status(201).json(result); // 201 Created status
+        res.status(201).json(result);
     };
 
     update = async (req: Request, res: Response) => {
@@ -197,8 +196,8 @@ export class EventController {
     }
 
      unassignStaff = async (req: Request, res: Response) => {
-        const { email: organizerEmail } = req.params; // Organizer email from URL
-        const { staffEmails, eventId } = req.body; // Expecting staffEmails (array) and eventId in body
+        const { email: organizerEmail } = req.params;
+        const { staffEmails, eventId } = req.body;
 
         if (!staffEmails || !Array.isArray(staffEmails) || staffEmails.length === 0 || !eventId) {
             return res.status(400).json({ message: 'Invalid request body: staffEmails (array) and eventId are required.' });
@@ -214,8 +213,8 @@ export class EventController {
     };
 
      getOrganizerAssignedStaff = async (req: Request, res: Response) => {
-        const { email: organizerEmail } = req.params; // Organizer email from URL
-        const { eventId } = req.query; // Expecting eventId as a query parameter
+        const { email: organizerEmail } = req.params;
+        const { eventId } = req.query;
 
         if (!eventId) {
             return res.status(400).json({ message: 'Event ID is required as a query parameter.' });

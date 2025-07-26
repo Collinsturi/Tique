@@ -1,13 +1,9 @@
 import { Request, Response } from "express";
 import { paymentService } from "./payment.service";
-import { PaymentInsert } from "../../drizzle/schema"; // Import PaymentInsert type
+import { PaymentInsert } from "../../drizzle/schema";
 
 export class PaymentController {
-    /**
-     * Retrieves all payments.
-     * @param req The Express request object.
-     * @param res The Express response object.
-     */
+
     getAll = async (req: Request, res: Response) => {
         try {
             const payments = await paymentService.getAllPayments();
@@ -18,11 +14,6 @@ export class PaymentController {
         }
     }
 
-    /**
-     * Retrieves a payment by its ID.
-     * @param req The Express request object.
-     * @param res The Express response object.
-     */
     getById = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
         if (isNaN(id)) {
@@ -41,12 +32,6 @@ export class PaymentController {
         }
     }
 
-    /**
-     * Creates a new payment record and updates the associated order's status.
-     * This method is typically called by a payment gateway's webhook or after a successful client-side payment confirmation.
-     * @param req The Express request object. Expected body: `PaymentInsert` data.
-     * @param res The Express response object.
-     */
     create = async (req: Request, res: Response) => {
         const paymentData: PaymentInsert = req.body;
 
@@ -67,11 +52,6 @@ export class PaymentController {
         }
     }
 
-    /**
-     * Updates an existing payment record.
-     * @param req The Express request object.
-     * @param res The Express response object.
-     */
     update = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
 
@@ -97,11 +77,6 @@ export class PaymentController {
         }
     }
 
-    /**
-     * Deletes a payment record.
-     * @param req The Express request object.
-     * @param res The Express response object.
-     */
     delete = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
         if (isNaN(id)) {
@@ -122,11 +97,7 @@ export class PaymentController {
         }
     }
 
-    /**
-     * Initiates an M-Pesa STK Push payment.
-     * @param req The Express request object. Expected body: `{ orderId: number, amount: number, phoneNumber: string }`
-     * @param res The Express response object.
-     */
+
     initiateMpesaPayment = async (req: Request, res: Response) => {
         const { orderId, amount, phoneNumber } = req.body;
 
@@ -143,12 +114,6 @@ export class PaymentController {
         }
     }
 
-    /**
-     * Handles the M-Pesa callback (webhook) for transaction results.
-     * This endpoint is called by Safaricom's Daraja API.
-     * @param req The Express request object (M-Pesa callback payload).
-     * @param res The Express response object.
-     */
     handleMpesaCallback = async (req: Request, res: Response) => {
         console.log("=== M-Pesa Callback Received ===");
         console.log("Headers:", req.headers);
@@ -169,11 +134,7 @@ export class PaymentController {
             });
         }
     }
-    /**
-     * Initiates a Paystack payment.
-     * @param req Expected body: { orderId: number, amount: number, email: string, callbackUrl?: string }
-     * @param res The Express response object.
-     */
+
     initiatePaystackPayment = async (req: Request, res: Response) => {
         const { orderId, amount, email, callbackUrl } = req.body;
 
@@ -209,11 +170,7 @@ export class PaymentController {
         }
     }
 
-    /**
-     * Verifies a Paystack payment.
-     * @param req Expected params: { reference: string }
-     * @param res The Express response object.
-     */
+
     verifyPaystackPayment = async (req: Request, res: Response) => {
         const { reference } = req.params;
 
@@ -244,11 +201,7 @@ export class PaymentController {
         }
     }
 
-    /**
-     * Handles Paystack webhooks.
-     * @param req The Express request object (Paystack webhook payload).
-     * @param res The Express response object.
-     */
+
     handlePaystackWebhook = async (req: Request, res: Response) => {
         console.log("=== Paystack Webhook Received ===");
         console.log("Headers:", req.headers);
