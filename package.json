@@ -70,6 +70,7 @@
     "@types/nodemailer": "^6.4.17",
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.16",
+    "@types/pg": "^8.15.4",
     "drizzle-kit": "^0.31.4",
     "jest": "^30.0.4",
     "k6": "^0.0.0",

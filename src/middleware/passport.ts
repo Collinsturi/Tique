@@ -29,7 +29,7 @@ passport.use(new GoogleStrategy({
                     password: '', // Password will not be used for social login
                     role: 'event_attendee', // Default role for new users
                     isVerified: true, // Social logins are considered verified
-                    verificationCode: null,
+                    verificationCode: 0,
                 } as UserInsert); // Cast to UserInsert as some fields might be optional for social login
 
                 if (!user) {

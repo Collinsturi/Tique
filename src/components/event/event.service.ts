@@ -10,7 +10,7 @@ import {
     userRoles
 } from "../../drizzle/schema";
 import {eq, and, sql, lte, gte, lt, inArray} from "drizzle-orm";
-import { addDays, startOfToday } from 'date-fns';
+import { addDays, startOfToday, format } from 'date-fns';
 
 export type CreateEventServicePayload = {
     category: string;
@@ -33,6 +33,14 @@ export type CreateEventServicePayload = {
         quantityAvailable: number;
         description?: string;
     }[];
+};
+
+// Add the missing AssignedStaff type
+export type AssignedStaff = {
+    id: number;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
 };
 
 export class EventService {
@@ -245,8 +253,8 @@ export class EventService {
             eventDate: payload.startDate.split('T')[0], // 'YYYY-MM-DD'
             eventTime: payload.startDate.split('T')[1]?.split('.')[0] ?? '00:00:00', // 'HH:mm:ss'
             organizerId,
-            latitude: payload.latitude ?? null,
-            longitude: payload.longitude ?? null,
+            latitude: payload.latitude !== null && payload.latitude !== undefined ? String(payload.latitude) : null,
+            longitude: payload.longitude !== null && payload.longitude !== undefined ? String(payload.longitude) : null,
             posterImageUrl: payload.posterImageUrl ?? null,
             thumbnailImageUrl: payload.thumbnailImageUrl ?? null,
         };
@@ -408,8 +416,8 @@ export class EventService {
         }
 
         // Get upcoming events for organizer (within next 30 days)
-        const today = startOfToday();
-        const thirtyDaysLater = addDays(today, 30);
+        const today = format(startOfToday(), 'yyyy-MM-dd');
+        const thirtyDaysLater = format(addDays(new Date(), 30), 'yyyy-MM-dd');
 
         const events = await db
             .select({
@@ -422,20 +430,20 @@ export class EventService {
                 venueName: Venue.name,
                 venueAddress: Venue.addresses,
                 ticketsSold: sql<number>`(
-                          SELECT COALESCE(SUM(tt.quantity_sold), 0)
-                          FROM ticket_types tt
-                          WHERE tt.event_id = ${Events.id}
-                        )`.mapWith(Number),
-                                    ticketsRemaining: sql<number>`(
-                          SELECT COALESCE(SUM(tt.quantity_available - tt.quantity_sold), 0)
-                          FROM ticket_types tt
-                          WHERE tt.event_id = ${Events.id}
-                        )`.mapWith(Number),
-                                    ticketsScanned: sql<number>`(
-                          SELECT COALESCE(COUNT(*), 0)
-                          FROM tickets t
-                          WHERE t.event_id = ${Events.id} AND t.is_scanned = true
-                        )`.mapWith(Number),
+                                             SELECT COALESCE(SUM(tt.quantity_sold), 0)
+                                             FROM ticket_types tt
+                                             WHERE tt.event_id = ${Events.id}
+                                         )`.mapWith(Number),
+                ticketsRemaining: sql<number>`(
+                                                  SELECT COALESCE(SUM(tt.quantity_available - tt.quantity_sold), 0)
+                                                  FROM ticket_types tt
+                                                  WHERE tt.event_id = ${Events.id}
+                                              )`.mapWith(Number),
+                ticketsScanned: sql<number>`(
+                                                SELECT COALESCE(COUNT(*), 0)
+                                                FROM tickets t
+                                                WHERE t.event_id = ${Events.id} AND t.is_scanned = true
+                                            )`.mapWith(Number),
             })
             .from(Events)
             .leftJoin(Venue, eq(Events.VenueId, Venue.id))
@@ -531,8 +539,8 @@ export class EventService {
             throw new Error('Only admin or organizer can fetch organizer current events');
         }
 
-        const today = startOfToday();
-        const sevenDaysLater = addDays(today, 7);
+        const today = format(startOfToday(), 'yyyy-MM-dd');
+        const sevenDaysLater = format(addDays(new Date(), 7), 'yyyy-MM-dd');
 
         const events = await db
             .select({
@@ -585,7 +593,7 @@ export class EventService {
             throw new Error('Only admin or organizer can fetch organizer past events');
         }
 
-        const today = startOfToday();
+        const today = format(startOfToday(), 'yyyy-MM-dd');
 
         const events = await db
             .select({

@@ -402,11 +402,12 @@ export class AnalyticsService {
             )
         });
 
-        const pendingOrderNotifications = pendingOrders.map(order => {
-            return `Order #${order.id} is still pending payment (KES ${order.totalAmount.toLocaleString()}).`;
-        });
+         const pendingOrderNotifications = pendingOrders.map(order => {
+             const amount = order.totalAmount ?? 0;
+             return `Order #${order.id} is still pending payment (KES ${amount.toLocaleString()}).`;
+         });
 
-        // 5. Return all notifications
+         // 5. Return all notifications
         return [...upcomingEventNotifications, ...pendingOrderNotifications];
     }
 }

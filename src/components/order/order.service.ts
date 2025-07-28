@@ -1,5 +1,5 @@
 import db from "../../drizzle/db";
-import { Orders, OrderInsert, OrderItems, OrderItemInsert, TicketTypes, Tickets } from "../../drizzle/schema";
+import { Orders, OrderInsert, OrderItems, OrderItemInsert, TicketTypes, Tickets, TicketInsert} from "../../drizzle/schema";
 import { eq, sql } from "drizzle-orm";
 import { v4 as uuidv4 } from 'uuid'; // For generating unique ticket codes
 
@@ -95,7 +95,7 @@ export class OrderService {
                     .set({
                         quantityAvailable: sql`${TicketTypes.quantityAvailable} - ${item.quantity}`,
                         quantitySold: sql`${TicketTypes.quantitySold} + ${item.quantity}`,
-                        updatedAt: new Date(), // Assuming TicketTypes has an updatedAt field
+                        // updatedAt: new Date(), // Assuming TicketTypes has an updatedAt field
                     })
                     .where(eq(TicketTypes.id, item.ticketTypeId));
             }

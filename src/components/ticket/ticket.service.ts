@@ -1,5 +1,5 @@
 import db from "../../drizzle/db";
-import {Tickets, Events, TicketTypes, Venue} from "../../drizzle/schema";
+import {Tickets, Events, TicketTypes, Venue, User, TicketLogs} from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 
 export class TicketService {
@@ -39,7 +39,6 @@ export class TicketService {
         return result[0];
     }
 
-
     async createTicket(ticketData: { orderItemId: number; userId: number; eventId: number; ticketTypeId: number }) {
         const { orderItemId, userId, eventId, ticketTypeId } = ticketData;
 
@@ -69,7 +68,8 @@ export class TicketService {
 
         const ticket = await this.getTicketById(id);
 
-        if (ticket.isScanned) {
+        // Fix: Access isScanned property from the ticket object
+        if (ticket.ticket.isScanned) {
             throw new Error(`Ticket with ID ${id} has already been scanned`);
         }
 
