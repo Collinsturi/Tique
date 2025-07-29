@@ -11,7 +11,7 @@ router.post("/payments/mpesa/stkpush", asyncHandler(paymentController.initiateMp
 // Route for M-Pesa to send transaction callbacks (webhooks)
 router.post("/payments/mpesa/callback", asyncHandler(paymentController.handleMpesaCallback));
 
-
+    
 // Paystack specific routes (placed before general :id routes for specificity)
 router.post("/payments/paystack/initialize", asyncHandler(paymentController.initiatePaystackPayment));
 router.get("/payments/paystack/verify/:reference", asyncHandler(paymentController.verifyPaystackPayment));

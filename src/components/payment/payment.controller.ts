@@ -237,17 +237,17 @@ export class PaymentController {
         const { orderId, mpesaReceiptNumber, phoneNumber, amount } = req.body;
 
         if (!orderId || !mpesaReceiptNumber || !phoneNumber || !amount) {
-            return res.status(400).json({
+             res.status(400).json({
                 message: "Missing required fields: orderId, mpesaReceiptNumber, phoneNumber, and amount."
             });
         }
 
         try {
             const result = await paymentService.verifyMpesaTillPayment(orderId, mpesaReceiptNumber, phoneNumber, amount);
-            return res.status(200).json(result);
+             res.status(200).json(result);
         } catch (error: any) {
             console.error("Error verifying manual M-Pesa payment:", error);
-            return res.status(500).json({
+             res.status(500).json({
                 message: "Failed to verify M-Pesa payment",
                 error: error.message
             });
