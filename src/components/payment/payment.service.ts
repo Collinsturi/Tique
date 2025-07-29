@@ -134,7 +134,8 @@ export class PaymentService {
     }
 
 
-    async initiateMpesaSTKPush(orderId: number, amount: number, phoneNumber: string) {
+    async initiateMpesaSTKPush(orderId: number, amount: number, phoneNumber: string, tillNumber?: string) {
+        console.log("Initiating M-Pesa STK Push for order", orderId, "with amount", amount, "to", phoneNumber, tillNumber ? `(Till: ${tillNumber})` : "");
         // Validation
         if (!MPESA_SHORTCODE || !MPESA_PASSKEY || !MPESA_CALLBACK_URL) {
             throw new Error("M-Pesa environment variables are not set. Please check .env file.");
@@ -155,6 +156,9 @@ export class PaymentService {
         if (amount <= 0) {
             throw new Error("Amount must be a positive number.");
         }
+
+        // Determine the PartyB (till number or default shortcode)
+        const targetPartyB = tillNumber || MPESA_SHORTCODE;
 
         try {
             // Get access token
@@ -178,16 +182,16 @@ export class PaymentService {
 
             // STK Push request
             const requestBody = {
-                BusinessShortCode: MPESA_SHORTCODE,
+                BusinessShortCode: MPESA_SHORTCODE, // This is your Paybill/Till number, used for authentication
                 Password: password,
                 Timestamp: timestamp,
-                TransactionType: "CustomerPayBillOnline",
+                TransactionType: "CustomerPayBillOnline", // This remains "CustomerPayBillOnline" even for till numbers
                 Amount: amount,
                 PartyA: formattedPhone,
-                PartyB: MPESA_SHORTCODE,
+                PartyB: targetPartyB, // This will be the user-provided till number or your default shortcode
                 PhoneNumber: formattedPhone,
                 CallBackURL: MPESA_CALLBACK_URL,
-                AccountReference: `Order-${orderId}`,
+                AccountReference: `Tiquet events`,
                 TransactionDesc: `Payment for Order ${orderId}`,
             };
 
@@ -487,6 +491,68 @@ export class PaymentService {
                 console.log(`Unhandled Paystack webhook event: ${event}`);
         }
     }
+    async verifyMpesaTillPayment(orderId: number, mpesaReceiptNumber: string, phoneNumber: string, amount: number) {
+        if (!mpesaReceiptNumber || !phoneNumber || !orderId || amount <= 0) {
+            throw new Error("Missing required fields to verify M-Pesa payment.");
+        }
+
+        // Format phone number
+        let formattedPhone = phoneNumber;
+        if (formattedPhone.startsWith('0')) {
+            formattedPhone = '254' + formattedPhone.slice(1);
+        } else if (formattedPhone.startsWith('+254')) {
+            formattedPhone = formattedPhone.slice(1);
+        }
+
+        if (!formattedPhone.startsWith('254') || formattedPhone.length !== 12) {
+            throw new Error("Invalid phone number format. Use format 2547XXXXXXXX.");
+        }
+
+        // Check if a payment with this receipt exists
+        const [existingPayment] = await db.select().from(Payment)
+            .where(eq(Payment.transactionId, mpesaReceiptNumber));
+
+        if (existingPayment) {
+            return {
+                success: true,
+                message: "Payment already recorded",
+                payment: existingPayment
+            };
+        }
+
+        // Create a new payment record
+        const newPayment: PaymentInsert = {
+            orderId: orderId,
+            amount: amount,
+            paymentMethod: 'mpesa',
+            paymentStatus: 'completed',
+            transactionId: mpesaReceiptNumber,
+            paymentDate: new Date(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        };
+
+        const result = await db.transaction(async (tx) => {
+            const [createdPayment] = await tx.insert(Payment).values(newPayment).returning();
+
+            await tx.update(Orders)
+                .set({
+                    status: 'completed',
+                    transactionId: mpesaReceiptNumber,
+                    updatedAt: new Date()
+                })
+                .where(eq(Orders.id, orderId));
+
+            return createdPayment;
+        });
+
+        return {
+            success: true,
+            message: "Manual M-Pesa payment verified and recorded successfully.",
+            payment: result
+        };
+    }
+
 }
 
 export const paymentService = new PaymentService();

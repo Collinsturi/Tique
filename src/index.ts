@@ -36,7 +36,7 @@ const initializeApp = () => {
     app.use(passport.session()); // Use passport.session() if you intend to use persistent login sessions
 
     app.use(cors({
-        origin: [process.env.FRONTEND_URL || 'http://localhost:5173', 'http://localhost:5174', 'https://tiquet-ui.vercel.app'], // Allow your frontend URL(s)
+        origin: ['http://localhost:5173', 'http://localhost:5174', 'https://tiquet-ui.vercel.app'], // Allow your frontend URL(s)
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
         credentials: true
     }));

@@ -99,18 +99,23 @@ export class PaymentController {
 
 
     initiateMpesaPayment = async (req: Request, res: Response) => {
-        const { orderId, amount, phoneNumber } = req.body;
+        // Destructure tillNumber from req.body as well
+        const { orderId, amount, phoneNumber, tillNumber } = req.body;
+        console.log("=== M-Pesa Payment Initiated ===");
 
         if (!orderId || !amount || !phoneNumber) {
             return res.status(400).json({ message: "Missing required fields: orderId, amount, and phoneNumber." });
         }
 
         try {
-            const response = await paymentService.initiateMpesaSTKPush(orderId, amount, phoneNumber);
+            // Pass tillNumber to the service function
+            const response = await paymentService.initiateMpesaSTKPush(orderId, amount, phoneNumber, tillNumber);
             return res.status(200).json({ message: "M-Pesa STK Push initiated successfully.", response });
         } catch (error: any) {
             console.error("Error initiating M-Pesa STK Push:", error);
-            return res.status(500).json({ message: "Failed to initiate M-Pesa payment", error: error.message });
+            // Provide more specific error messages for the client
+            const errorMessage = error.response?.data?.CustomerMessage || error.message;
+            return res.status(500).json({ message: "Failed to initiate M-Pesa payment", error: errorMessage });
         }
     }
 
@@ -122,12 +127,14 @@ export class PaymentController {
 
         try {
             await paymentService.processMpesaCallback(req.body);
+            // Safaricom expects a specific JSON response for successful callbacks
             return res.json({
                 "ResultCode": 0,
                 "ResultDesc": "C2B Callback received successfully."
             });
         } catch (error: any) {
             console.error("Error processing M-Pesa callback:", error);
+            // Return an error response that Safaricom can understand (though it might not always process it)
             return res.json({
                 "ResultCode": 1,
                 "ResultDesc": `Error processing callback: ${error.message}`
@@ -226,6 +233,27 @@ export class PaymentController {
             });
         }
     }
+    verifyMpesaTillPayment = async (req: Request, res: Response) => {
+        const { orderId, mpesaReceiptNumber, phoneNumber, amount } = req.body;
+
+        if (!orderId || !mpesaReceiptNumber || !phoneNumber || !amount) {
+            return res.status(400).json({
+                message: "Missing required fields: orderId, mpesaReceiptNumber, phoneNumber, and amount."
+            });
+        }
+
+        try {
+            const result = await paymentService.verifyMpesaTillPayment(orderId, mpesaReceiptNumber, phoneNumber, amount);
+            return res.status(200).json(result);
+        } catch (error: any) {
+            console.error("Error verifying manual M-Pesa payment:", error);
+            return res.status(500).json({
+                message: "Failed to verify M-Pesa payment",
+                error: error.message
+            });
+        }
+    };
+
 }
 
 export const paymentController = new PaymentController();
