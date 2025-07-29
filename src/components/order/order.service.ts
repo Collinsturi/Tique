@@ -1,6 +1,6 @@
 import db from "../../drizzle/db";
 import { Orders, OrderInsert, OrderItems, OrderItemInsert, TicketTypes, Tickets, TicketInsert} from "../../drizzle/schema";
-import { eq, sql } from "drizzle-orm";
+import {eq, inArray, sql} from "drizzle-orm";
 import { v4 as uuidv4 } from 'uuid'; // For generating unique ticket codes
 
 export class OrderService {
@@ -45,17 +45,17 @@ export class OrderService {
         let totalOrderAmount: number = 0;
         const ticketsToGenerate: Omit<TicketInsert, 'orderItemId'>[] = [];
         const processedOrderItems: Omit<OrderItemInsert, 'orderId'>[] = [];
+        const ticketTypeUpdates: { id: number; quantityRequested: number }[] = [];
 
-        // Use a transaction for atomicity: all or nothing
-        const result = await db.transaction(async (tx) => {
-            // 1. Validate ticket types, calculate subtotals, and prepare quantity updates
+        try {
+            // 1. Validate ticket types, calculate subtotals, and prepare data
             for (const item of orderItemsData) {
                 if (!item.ticketTypeId || !item.quantity || item.quantity <= 0) {
                     throw new Error("Each order item must have a valid ticketTypeId and a positive quantity.");
                 }
 
                 // Fetch ticket type details to get price and current availability
-                const [ticketType] = await tx.select().from(TicketTypes).where(eq(TicketTypes.id, item.ticketTypeId));
+                const [ticketType] = await db.select().from(TicketTypes).where(eq(TicketTypes.id, item.ticketTypeId));
 
                 if (!ticketType) {
                     throw new Error(`Ticket type with ID ${item.ticketTypeId} not found.`);
@@ -78,6 +78,12 @@ export class OrderService {
                     subtotal: subtotal,
                 });
 
+                // Store ticket type updates for later execution
+                ticketTypeUpdates.push({
+                    id: item.ticketTypeId,
+                    quantityRequested: item.quantity
+                });
+
                 // Prepare tickets to be generated after order items are inserted
                 for (let i = 0; i < item.quantity; i++) {
                     ticketsToGenerate.push({
@@ -89,19 +95,21 @@ export class OrderService {
                         // orderItemId will be set after OrderItems are inserted
                     });
                 }
-
-                // Update ticket type quantities immediately within the transaction
-                await tx.update(TicketTypes)
-                    .set({
-                        quantityAvailable: sql`${TicketTypes.quantityAvailable} - ${item.quantity}`,
-                        quantitySold: sql`${TicketTypes.quantitySold} + ${item.quantity}`,
-                        // updatedAt: new Date(), // Assuming TicketTypes has an updatedAt field
-                    })
-                    .where(eq(TicketTypes.id, item.ticketTypeId));
             }
 
-            // 2. Create the main order entry
-            const [newOrder] = await tx.insert(Orders).values({
+            // 2. Update ticket type quantities first (most critical operation)
+            for (const update of ticketTypeUpdates) {
+                await db.update(TicketTypes)
+                    .set({
+                        quantityAvailable: sql`${TicketTypes.quantityAvailable} - ${update.quantityRequested}`,
+                        quantitySold: sql`${TicketTypes.quantitySold} + ${update.quantityRequested}`,
+                        // updatedAt: new Date(), // Assuming TicketTypes has an updatedAt field
+                    })
+                    .where(eq(TicketTypes.id, update.id));
+            }
+
+            // 3. Create the main order entry
+            const [newOrder] = await db.insert(Orders).values({
                 userId: userId,
                 totalAmount: totalOrderAmount,
                 status: 'pending_payment', // Initial status is pending payment
@@ -111,42 +119,108 @@ export class OrderService {
             }).returning();
 
             if (!newOrder) {
+                // Rollback ticket quantities if order creation fails
+                await this.rollbackTicketQuantities(ticketTypeUpdates);
                 throw new Error("Failed to create the main order entry.");
             }
 
-            // 3. Insert order items, linking them to the newly created order
+            // 4. Insert order items, linking them to the newly created order
             const itemsToInsert = processedOrderItems.map(item => ({
                 ...item,
                 orderId: newOrder.id,
             }));
-            const insertedOrderItems = await tx.insert(OrderItems).values(itemsToInsert).returning();
 
-            // 4. Insert generated tickets, linking them to their specific order items
-            for (const ticket of ticketsToGenerate) {
-                // Find the corresponding order item to link the ticket
-                const correspondingOrderItem = insertedOrderItems.find(oi =>
-                    oi.ticketTypeId === ticket.ticketTypeId &&
-                    oi.orderId === newOrder.id
-                );
-
-                if (correspondingOrderItem) {
-                    await tx.insert(Tickets).values({
-                        ...ticket,
-                        orderItemId: correspondingOrderItem.id,
-                        createdAt: new Date(),
-                    });
-                } else {
-                    // This scenario indicates a logic error if it occurs
-                    console.warn(`Could not find corresponding order item for ticket type ${ticket.ticketTypeId} during ticket generation.`);
-                    throw new Error("Internal error: Failed to link tickets to order items.");
-                }
+            let insertedOrderItems;
+            try {
+                insertedOrderItems = await db.insert(OrderItems).values(itemsToInsert).returning();
+            } catch (error) {
+                // Rollback: Delete the order and restore ticket quantities
+                await this.rollbackOrder(newOrder.id, ticketTypeUpdates);
+                throw new Error("Failed to create order items.");
             }
 
-            // Return the complete order details (order, items, tickets)
-            return newOrder.id;
-        });
+            // 5. Insert generated tickets, linking them to their specific order items
+            try {
+                for (const ticket of ticketsToGenerate) {
+                    // Find the corresponding order item to link the ticket
+                    const correspondingOrderItem = insertedOrderItems.find(oi =>
+                        oi.ticketTypeId === ticket.ticketTypeId &&
+                        oi.orderId === newOrder.id
+                    );
 
-        return await this.getOrderById(result);
+                    if (correspondingOrderItem) {
+                        await db.insert(Tickets).values({
+                            ...ticket,
+                            orderItemId: correspondingOrderItem.id,
+                            createdAt: new Date(),
+                        });
+                    } else {
+                        // This scenario indicates a logic error if it occurs
+                        console.warn(`Could not find corresponding order item for ticket type ${ticket.ticketTypeId} during ticket generation.`);
+                        throw new Error("Internal error: Failed to link tickets to order items.");
+                    }
+                }
+            } catch (error) {
+                // Rollback: Delete the order, order items, and restore ticket quantities
+                await this.rollbackOrder(newOrder.id, ticketTypeUpdates);
+                throw new Error("Failed to create tickets.");
+            }
+
+            // Return the complete order details
+            return await this.getOrderById(newOrder.id);
+
+        } catch (error) {
+            // If we haven't started making changes yet, just re-throw
+            if (ticketTypeUpdates.length === 0) {
+                throw error;
+            }
+
+            // If error occurred during validation phase, re-throw without rollback
+            throw error;
+        }
+    }
+
+// Helper method to rollback ticket quantities
+    private async rollbackTicketQuantities(ticketTypeUpdates: { id: number; quantityRequested: number }[]) {
+        try {
+            for (const update of ticketTypeUpdates) {
+                await db.update(TicketTypes)
+                    .set({
+                        quantityAvailable: sql`${TicketTypes.quantityAvailable} + ${update.quantityRequested}`,
+                        quantitySold: sql`${TicketTypes.quantitySold} - ${update.quantityRequested}`,
+                    })
+                    .where(eq(TicketTypes.id, update.id));
+            }
+        } catch (rollbackError) {
+            console.error('Failed to rollback ticket quantities:', rollbackError);
+            // You might want to log this to a monitoring system or queue for manual review
+        }
+    }
+
+// Helper method to rollback the entire order
+    private async rollbackOrder(orderId: number, ticketTypeUpdates: { id: number; quantityRequested: number }[]) {
+        try {
+            // Delete tickets first (due to foreign key constraints)
+            await db.delete(Tickets).where(
+                inArray(Tickets.orderItemId,
+                    db.select({ id: OrderItems.id }).from(OrderItems).where(eq(OrderItems.orderId, orderId))
+                )
+            );
+
+            // Delete order items
+            await db.delete(OrderItems).where(eq(OrderItems.orderId, orderId));
+
+            // Delete the order
+            await db.delete(Orders).where(eq(Orders.id, orderId));
+
+            // Restore ticket quantities
+            await this.rollbackTicketQuantities(ticketTypeUpdates);
+
+        } catch (rollbackError) {
+            console.error('Failed to rollback order:', rollbackError);
+            // You might want to log this to a monitoring system or queue for manual review
+            // Consider marking the order as "failed" instead of deleting it for audit purposes
+        }
     }
 
     async updateOrder(id: number, updateData: Partial<OrderInsert>) {
